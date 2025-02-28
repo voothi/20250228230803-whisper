@@ -48,30 +48,42 @@ def run_transcription():
         transcribing = False
 
 def on_press(key):
+    global current_keys
     try:
         if key == keyboard.Key.ctrl_l:
-            current_keys.add(keyboard.Key.ctrl_l)
+            current_keys.add(key)
             print("Нажата Ctrl")
-        elif key == keyboard.Key.alt_l:
-            current_keys.add(keyboard.Key.alt_l)
-            print("Нажата Alt")
-            print("Нажата комбинация Ctrl + Alt + R")
-            # Запускаем транскрибирование в отдельном потоке
-            threading.Thread(target=run_transcription).start()
+        elif key == keyboard.Key.shift_l:
+            current_keys.add(key)
+            print("Нажата Shift")
+        elif hasattr(key, 'char') and key.char is not None and key.char.lower() == 't':
+            if keyboard.Key.ctrl_l in current_keys and keyboard.Key.shift_l in current_keys:
+                print("Нажато сочетание Ctrl + Shift + T")
+                # Запускаем транскрибирование в отдельном потоке
+                threading.Thread(target=run_transcription).start()
+                current_keys.clear()  # Очистим текущие клавиши после выполнения
+        else:
+            print(f"Нажата клавиша: {key}")  # Печатаем, какую клавишу нажали
     except AttributeError:
         pass
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
 
 def on_release(key):
-    if key in current_keys:
-        current_keys.remove(key)
-        print(f"Отпущена клавиша: {key}")
-    if key == keyboard.Key.esc:
-        # Останавливаем прослушивание по нажатию Esc
-        print("Нажата клавиша Esc. Выход.")
-        return False
+    global current_keys
+    try:
+        if key in current_keys:
+            current_keys.remove(key)
+            print(f"Отпущена клавиша: {key}")
+        if key == keyboard.Key.esc:
+            # Останавливаем прослушивание по нажатию Esc
+            print("Нажата клавиша Esc. Выход.")
+            return False
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
 
 def main():
-    print("Программа запущена. Нажмите Ctrl + Alt + R для начала транскрибирования.")
+    print("Программа запущена. Нажмите Ctrl + Shift + T для начала транскрибирования.")
     print("Нажмите Esc для выхода.")
 
     # Устанавливаем прослушивание клавиш
