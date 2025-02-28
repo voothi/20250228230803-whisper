@@ -51,9 +51,10 @@ def on_press(key):
     try:
         if key == keyboard.Key.ctrl_l:
             current_keys.add(keyboard.Key.ctrl_l)
+            print("Нажата Ctrl")
         elif key == keyboard.Key.alt_l:
             current_keys.add(keyboard.Key.alt_l)
-        elif key.char == 'r' and keyboard.Key.ctrl_l in current_keys and keyboard.Key.alt_l in current_keys:
+            print("Нажата Alt")
             print("Нажата комбинация Ctrl + Alt + R")
             # Запускаем транскрибирование в отдельном потоке
             threading.Thread(target=run_transcription).start()
@@ -63,8 +64,10 @@ def on_press(key):
 def on_release(key):
     if key in current_keys:
         current_keys.remove(key)
+        print(f"Отпущена клавиша: {key}")
     if key == keyboard.Key.esc:
         # Останавливаем прослушивание по нажатию Esc
+        print("Нажата клавиша Esc. Выход.")
         return False
 
 def main():
