@@ -122,3 +122,5 @@ result.de.tsv
 in/
 
 IntelliFilter/
+
+venv/

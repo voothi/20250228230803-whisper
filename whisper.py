@@ -1,3 +1,4 @@
+# whisper.py
 from pynput import keyboard
 import subprocess
 import threading
@@ -5,8 +6,8 @@ import os
 
 # Параметры
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
-audio_file_path = r"input_audio_file.wav"
-output_file_path = r"output_transcript.txt"
+audio_file_path = r".\input_audio_file.wav"
+output_file_path = r".\output_transcript.txt"
 
 # Глобальные переменные для отслеживания клавиш
 current_keys = set()
@@ -22,10 +23,14 @@ def run_transcription():
     print("Начало транскрибирования...")
 
     try:
+        # Укажите путь к модели
+        model_path = r"C:\Tools\open-webui\venv\Lib\site-packages\open_webui\data\cache\whisper\models\models--Systran--faster-whisper-base\snapshots\ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66\model.bin"
+
         # Выполняем команду whisper-faster
         command = [
             whisper_faster_path,
             audio_file_path,
+            "--model", model_path,
             "--output", output_file_path,
             # Добавьте другие необходимые параметры сюда
             # Например: "--initial-prompt", "Starting the meeting.",
