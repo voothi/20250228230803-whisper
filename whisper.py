@@ -8,8 +8,8 @@ import os
 
 # Параметры
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
-audio_file_path = r".\input_audio_file.wav"
-output_file_path = r".\output_transcript.txt"
+audio_file_path = r"U:\voothi\20250228230803-whisper\input_audio_file.wav"
+output_file_path = r"U:\voothi\20250228230803-whisper\output_transcript.txt"
 
 # Глобальные переменные для отслеживания клавиш
 current_keys = set()
@@ -27,6 +27,8 @@ def record_audio(filename, duration=5, sample_rate=44100):
         raise  # Перебрасываем исключение для видимости в on_press
 
 def run_transcription():
+    time.sleep(0.5)  # Даем время на сохранение файла
+    # ... остальной код ...
     global transcribing
     if transcribing:
         print("Транскрибирование уже запущено.")
@@ -70,9 +72,9 @@ def on_press(key):
         elif hasattr(key, 'char') and key.char is not None and key.char.lower() == 't':
             if keyboard.Key.ctrl_l in current_keys and keyboard.Key.shift_l in current_keys:
                 print("Запуск записи и транскрибации...")
-                # 1. Записываем аудио
-                record_audio(audio_file_path, duration=10)  # 10 секунд записи
-                # 2. Запуск транскрибации
+                # Запуск записи в отдельном потоке
+                threading.Thread(target=lambda: record_audio(audio_file_path, duration=10)).start()
+                # Запуск транскрибации с задержкой (дождаться окончания записи)
                 threading.Thread(target=run_transcription).start()
                 current_keys.clear()
     except Exception as e:
@@ -92,6 +94,10 @@ def on_release(key):
         print(f"Произошла ошибка: {e}")
 
 def main():
+    print("Доступные аудиоустройства:")
+    print(sd.query_devices())  # Покажет список устройств
+    print("Программа запущена. Нажмите Ctrl + Shift + T...")
+    # ... остальной код ...
     print("Программа запущена. Нажмите Ctrl + Shift + T для начала транскрибирования.")
     print("Нажмите Esc для выхода.")
 
