@@ -133,21 +133,15 @@ def restart_with_language(language):
         icon.visible = False
         icon.run_visible = False
         icon._stop()
-        
+
         # Create new arguments for the new process
         args = [arg for arg in sys.argv[1:] if not arg.startswith('--language=')]
         args.append(f"--language={language}")
-        
+
         print(f"\nRestarting with language: {language}\n")
-        
+
         # Start a new process with the new arguments
         subprocess.Popen([sys.executable, __file__] + args)
-        
-        # Give a slight delay to ensure the new process starts
-        time.sleep(0.5)
-        
-        # Stop the current process without exiting
-        icon.stop()
     except Exception as e:
         print(f"Error during restart: {e}")
 
