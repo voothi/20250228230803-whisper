@@ -57,7 +57,7 @@ def run_transcription():
         with open(output_srt_path, 'r', encoding='utf-8') as srt_file, open(output_txt_path, 'w', encoding='utf-8') as txt_file:
             for line in srt_file:
                 # Skip timestamps and only write the spoken text lines
-                if '-->' not in line and line.strip() != "":
+                if '-->' not in line and line.strip() != "" and not line.strip().isdigit():
                     txt_file.write(line.strip() + '\n')
         print("TXT transcription created from SRT.")
 
