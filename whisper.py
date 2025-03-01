@@ -128,22 +128,16 @@ def on_activate():
 
 def restart_with_language(language):
     global icon
-    try:
-        # Hide and stop the current icon
-        icon.visible = False
-        icon.run_visible = False
-        icon._stop()
-
-        # Create new arguments for the new process
-        args = [arg for arg in sys.argv[1:] if not arg.startswith('--language=')]
-        args.append(f"--language={language}")
-
-        print(f"\nRestarting with language: {language}\n")
-
-        # Start a new process with the new arguments
-        subprocess.Popen([sys.executable, __file__] + args)
-    except Exception as e:
-        print(f"Error during restart: {e}")
+    icon.stop()  # Останавливаем текущую иконку
+    # Перезапуск скрипта с выбранным языком и другими аргументами командной строки
+    python = sys.executable
+    args = sys.argv[1:]
+    args.append(f"--language={language}")
+    
+    print(f"\nRestarting with language: {language}\n")  # Condensed print statements
+    
+    subprocess.Popen([python, __file__] + args)
+    sys.exit(0)  # Завершаем текущий процесс
 
 def create_icon():
     global icon
@@ -172,6 +166,9 @@ def restart():
     # Перезапуск скрипта с теми же аргументами командной строки
     python = sys.executable
     subprocess.Popen([python, __file__] + sys.argv[1:])
+
+    print(f"\nRestarting...\n")
+
     sys.exit(0)  # Завершаем текущий процесс
 
 def main():
