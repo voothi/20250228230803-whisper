@@ -152,7 +152,7 @@ def main():
     parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
     parser.add_argument("--model", choices=["base", "medium"], default="base",  # Default model is "base"
                         help="Select Whisper model version (base or medium).")
-    parser.add_argument("--language", choices=["de", "en", "ru", "uk"], default=None,  # No default language
+    parser.add_argument("--language", choices=["en", "de", "ru", "uk"], default=None,  # No default language
                         help="Select language for transcription.")
     parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")  # Add tray argument
     args = parser.parse_args()
