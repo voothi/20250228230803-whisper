@@ -3,6 +3,8 @@ from pynput import keyboard
 import subprocess
 import threading
 import os
+import sounddevice as sd  # Установите библиотеку: pip install sounddevice
+from scipy.io.wavfile import write  # Установите scipy: pip install scipy
 
 # Параметры
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
@@ -52,22 +54,18 @@ def on_press(key):
     try:
         if key == keyboard.Key.ctrl_l:
             current_keys.add(key)
-            print("Нажата Ctrl")
         elif key == keyboard.Key.shift_l:
             current_keys.add(key)
-            print("Нажата Shift")
         elif hasattr(key, 'char') and key.char is not None and key.char.lower() == 't':
             if keyboard.Key.ctrl_l in current_keys and keyboard.Key.shift_l in current_keys:
-                print("Нажато сочетание Ctrl + Shift + T")
-                # Запускаем транскрибирование в отдельном потоке
+                print("Запуск записи и транскрибации...")
+                # 1. Записываем аудио
+                record_audio(audio_file_path, duration=10)  # 10 секунд записи
+                # 2. Запуск транскрибации
                 threading.Thread(target=run_transcription).start()
-                current_keys.clear()  # Очистим текущие клавиши после выполнения
-        else:
-            print(f"Нажата клавиша: {key}")  # Печатаем, какую клавишу нажали
-    except AttributeError:
-        pass
+                current_keys.clear()
     except Exception as e:
-        print(f"Произошла ошибка: {e}")
+        print(f"Ошибка: {e}")
 
 def on_release(key):
     global current_keys
@@ -81,6 +79,13 @@ def on_release(key):
             return False
     except Exception as e:
         print(f"Произошла ошибка: {e}")
+
+def record_audio(filename, duration=5, sample_rate=44100):
+    print("Запись началась...")
+    audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
+    sd.wait()  # Ждем окончания записи
+    write(filename, sample_rate, audio_data)
+    print("Запись сохранена.")
 
 def main():
     print("Программа запущена. Нажмите Ctrl + Shift + T для начала транскрибирования.")
