@@ -5,30 +5,27 @@ from pynput import keyboard
 import subprocess
 import threading
 import os
+import time
 
 # Параметры
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
 audio_file_path = r"U:\voothi\20250228230803-whisper\input_audio_file.wav"
 output_file_path = r"U:\voothi\20250228230803-whisper\output_transcript.txt"
 
-# Глобальные переменные для отслеживания клавиш
-current_keys = set()
+# Глобальные переменные для отслеживания
 transcribing = False
 
-def record_audio(filename, duration=5, sample_rate=44100):
+def record_audio(filename, duration=10, sample_rate=44100):
     try:
         print("Запись началась...")
         audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
-        sd.wait()
+        sd.wait()  # Ждем завершения записи
         write(filename, sample_rate, audio_data)
         print("Запись сохранена.")
     except Exception as e:
         print(f"Ошибка записи: {e}")
-        raise  # Перебрасываем исключение для видимости в on_press
 
 def run_transcription():
-    time.sleep(0.5)  # Даем время на сохранение файла
-    # ... остальной код ...
     global transcribing
     if transcribing:
         print("Транскрибирование уже запущено.")
@@ -47,9 +44,7 @@ def run_transcription():
             audio_file_path,
             "--model", model_path,
             "--output", output_file_path,
-            # Добавьте другие необходимые параметры сюда
-            # Например: "--initial-prompt", "Starting the meeting.",
-            #           "--vad-filter", "--vad-threshold", "0.45",
+            # Добавьте другие необходимые параметры, если нужно
         ]
         result = subprocess.run(command, check=True, capture_output=True, text=True)
 
@@ -62,47 +57,22 @@ def run_transcription():
     finally:
         transcribing = False
 
-def on_press(key):
-    global current_keys
-    try:
-        if key == keyboard.Key.ctrl_l:
-            current_keys.add(key)
-        elif key == keyboard.Key.shift_l:
-            current_keys.add(key)
-        elif hasattr(key, 'char') and key.char is not None and key.char.lower() == 't':
-            if keyboard.Key.ctrl_l in current_keys and keyboard.Key.shift_l in current_keys:
-                print("Запуск записи и транскрибации...")
-                # Запуск записи в отдельном потоке
-                threading.Thread(target=lambda: record_audio(audio_file_path, duration=10)).start()
-                # Запуск транскрибации с задержкой (дождаться окончания записи)
-                threading.Thread(target=run_transcription).start()
-                current_keys.clear()
-    except Exception as e:
-        print(f"Ошибка: {e}")
-
-def on_release(key):
-    global current_keys
-    try:
-        if key in current_keys:
-            current_keys.remove(key)
-            print(f"Отпущена клавиша: {key}")
-        if key == keyboard.Key.esc:
-            # Останавливаем прослушивание по нажатию Esc
-            print("Нажата клавиша Esc. Выход.")
-            return False
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-
 def main():
     print("Доступные аудиоустройства:")
     print(sd.query_devices())  # Покажет список устройств
-    print("Программа запущена. Нажмите Ctrl + Shift + T...")
-    # ... остальной код ...
-    print("Программа запущена. Нажмите Ctrl + Shift + T для начала транскрибирования.")
+
+    # Запускаем запись сразу при запуске утилиты
+    threading.Thread(target=record_audio, args=(audio_file_path, 10)).start()
+
+    # Ждем, чтобы запись завершилась перед запуском транскрипции
+    time.sleep(11)  # Увеличьте время, если необходимо, в зависимости от длины записи
+    threading.Thread(target=run_transcription).start()
+
+    print("Программа запущена. Запись и транскрипция выполняются.")
     print("Нажмите Esc для выхода.")
 
-    # Устанавливаем прослушивание клавиш
-    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+    # Устанавливаем прослушивание клавиш (не используется, но оставлено на случай, если потребуется)
+    with keyboard.Listener(on_press=lambda key: None, on_release=lambda key: None) as listener:
         listener.join()
 
 if __name__ == "__main__":
