@@ -9,19 +9,19 @@ import argparse
 import pyperclip
 from datetime import datetime
 
-# Конфигурационные параметры
+# Configuration parameters
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
 base_dir = r".\tmp"
-os.makedirs(base_dir, exist_ok=True)  # Создать директорию, если не существует
+os.makedirs(base_dir, exist_ok=True)  # Create a directory if it does not exist
 
-# Глобальные переменные для управления состоянием и путями
+# Global variables for managing state and paths
 transcribing = False
 is_recording = False
 audio_data = []
 recording_thread = None
 copy_to_clipboard = False
 use_timestamp = False
-model_selected = "base"  # Значение по умолчанию
+model_selected = "base"  # Default value
 timestamp_str = ""
 audio_file_path = ""
 output_srt_path = ""
@@ -53,7 +53,7 @@ def record_audio(sample_rate=44100):
         is_recording = False
 
 def run_transcription():
-    global transcribing, output_srt_path, output_txt_path, model_selected
+    global transcribing, output_srt_path, output_txt_path, model_selected  # Ensure model_selected is global
     if transcribing:
         print("Transcription is already running.")
         return
@@ -64,7 +64,7 @@ def run_transcription():
         srt_command = [
             whisper_faster_path,
             audio_file_path,
-            "--model", model_selected,
+            "--model", model_selected,  # Use the updated model_selected value
             "--model_dir", model_path,
             "--output_dir", os.path.dirname(output_srt_path),
             "--output_format", "srt",
@@ -113,15 +113,16 @@ def on_activate():
         print("Stopping recording...")
 
 def main():
-    global copy_to_clipboard, use_timestamp, model_selected
+    global copy_to_clipboard, use_timestamp, model_selected  # Add model_selected to global variables
     parser = argparse.ArgumentParser(description="Audio recorder and transcriber with Whisper.")
     parser.add_argument("--clipboard", action="store_true", help="Copy transcribed text to clipboard.")
     parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
-    parser.add_argument("--model", choices=["base", "medium"], default="base",
+    parser.add_argument("--model", choices=["base", "medium"], default="base",  # Default model is "base"
                         help="Select Whisper model version (base or medium).")
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
     use_timestamp = args.timestamp
+    model_selected = args.model  # Update model_selected with the parsed value
 
     print("Available audio devices:")
     print(sd.query_devices())
