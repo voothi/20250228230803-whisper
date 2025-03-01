@@ -63,7 +63,7 @@ def run_transcription():
         srt_command = [
             whisper_faster_path,
             audio_file_path,
-            "--model", "medium",
+            "--model", "base",
             "--model_dir", model_path,
             "--output_dir", os.path.dirname(output_srt_path),
             "--output_format", "srt",
