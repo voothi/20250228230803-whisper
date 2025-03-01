@@ -22,15 +22,22 @@ def record_audio(filename, sample_rate=44100):
     """ Record audio from the microphone and save it to the specified filename. """
     global is_recording
     
-    is_recording = True
-    audio_data = sd.rec(int(sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
+    # Prepare to record
     print("Recording started... Press Ctrl + Alt + W again to stop.")
-    
+    is_recording = True
+    audio_data = []
+
+    # Recording in chunks
     while is_recording:
-        sd.sleep(100)  # Sleep to keep the thread alive while recording
-    
-    sd.stop()  # Stop recording when is_recording is false
-    write(filename, sample_rate, audio_data)
+        chunk = sd.rec(int(sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
+        sd.wait()  # Wait until the chunk has been recorded
+        audio_data.append(chunk)
+
+    # Concatenate all chunks
+    audio_data = np.concatenate(audio_data, axis=0) if audio_data else np.array([])
+
+    sd.stop()  # Stop recording
+    write(filename, sample_rate, audio_data)  # Write the full audio to a file
     print("Recording saved.")
 
 def run_transcription():
