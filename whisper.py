@@ -33,6 +33,14 @@ output_srt_path = ""
 output_txt_path = ""
 icon = None
 
+# Dictionary to hold language icons
+language_icons = {
+    'en': Image.new('RGB', (16, 16), color='yellow'),
+    'de': Image.new('RGB', (16, 16), color='green'),
+    'ru': Image.new('RGB', (16, 16), color='purple'),
+    'uk': Image.new('RGB', (16, 16), color='blue'),
+}
+
 def record_audio(sample_rate=44100):
     global is_recording, audio_data, audio_file_path
     print("Recording started... Press Ctrl + Alt + W again to stop.")
@@ -123,7 +131,8 @@ def on_activate():
         print("Stopping recording...")
 
 def restart_with_language(language):
-    global icon
+    global language_selected, icon
+    language_selected = language
     icon.stop()  # Останавливаем текущую иконку
     # Перезапуск скрипта с выбранным языком и другими аргументами командной строки
     python = sys.executable
@@ -132,9 +141,17 @@ def restart_with_language(language):
     subprocess.Popen([python, __file__] + args)
     sys.exit(0)  # Завершаем текущий процесс
 
+def update_icon(new_language):
+    global icon
+    new_image = language_icons[new_language]
+    icon.icon = new_image
+    icon.update_menu()
+    icon.visible = False
+    icon.visible = True
+
 def create_icon():
     global icon
-    image = Image.new('RGB', (16, 16), color='blue')
+    image = language_icons[language_selected]
     icon = pystray.Icon(
         "Whisper", 
         image, 
