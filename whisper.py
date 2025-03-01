@@ -12,6 +12,7 @@ import pystray
 from PIL import Image
 from io import BytesIO
 import sys
+import time
 
 # Configuration parameters
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
@@ -128,16 +129,27 @@ def on_activate():
 def restart_with_language(language):
     global icon
     try:
-        icon.stop()  # Останавливаем текущую иконку
-        # Перезапуск скрипта с выбранным языком и другими аргументами командной строки
-        python = sys.executable
-        args = sys.argv[1:]
+        # Запрещаем дальнейшие обновления и останавливаем иконку
+        icon.visible = False
+        icon.run_visible = False
+        icon._stop()
+        
+        # Создаем новый список аргументов, удаляя текущий параметр --language
+        args = [arg for arg in sys.argv[1:] if not arg.startswith('--language=')]
+        
+        # Добавляем новый параметр --language
         args.append(f"--language={language}")
         
-        print(f"\nRestarting with language: {language}\n")  # Condensed print statements
+        print(f"\nRestarting with language: {language}\n")  # Упрощенные сообщения
         
-        subprocess.Popen([python, __file__] + args)
-        sys.exit(0)  # Завершаем текущий процесс
+        # Запускаем новый процесс с новыми аргументами
+        subprocess.Popen([sys.executable, __file__] + args)
+        
+        # Даем небольшое время для нового процесса, чтобы он начал выполняться
+        time.sleep(0.5)
+        
+        # Завершаем текущий процесс
+        sys.exit(0)
     except Exception as e:
         print(f"Error during restart: {e}")
 
