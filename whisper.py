@@ -138,7 +138,7 @@ def restart_with_language(language):
     
     # Using subprocess to call the wrapper script
     subprocess.Popen([python, "restart.py", script_to_run] + args)
-    os._exit()  # Terminate the current process
+    os._exit(0)  # Terminate the current process
 
 def create_icon():
     global icon
@@ -174,7 +174,7 @@ def restart():
     
     # Using subprocess to call the wrapper script
     subprocess.Popen([python, "restart.py", script_to_run] + sys.argv[1:])
-    os._exit()  # Terminate the current process
+    os._exit(0)  # Terminate the current process
 
 def main():
     global copy_to_clipboard, use_timestamp, model_selected, language_selected, tray
