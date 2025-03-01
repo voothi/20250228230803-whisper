@@ -5,6 +5,7 @@ import subprocess
 import threading
 import os
 import time
+import numpy as np
 
 # Parameters
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
@@ -15,17 +16,22 @@ output_txt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.txt"
 # Global variables for tracking
 transcribing = False
 recording_thread = None
+is_recording = False  # Track if we are currently recording
 
-def record_audio(filename, duration=10, sample_rate=44100):
+def record_audio(filename, sample_rate=44100):
     """ Record audio from the microphone and save it to the specified filename. """
-    try:
-        print("Recording started...")
-        audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
-        sd.wait()  # Wait until recording is finished
-        write(filename, sample_rate, audio_data)
-        print("Recording saved.")
-    except Exception as e:
-        print(f"Recording error: {e}")
+    global is_recording
+    
+    is_recording = True
+    audio_data = sd.rec(int(sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
+    print("Recording started... Press Ctrl + Alt + W again to stop.")
+    
+    while is_recording:
+        sd.sleep(100)  # Sleep to keep the thread alive while recording
+    
+    sd.stop()  # Stop recording when is_recording is false
+    write(filename, sample_rate, audio_data)
+    print("Recording saved.")
 
 def run_transcription():
     global transcribing
@@ -54,7 +60,7 @@ def run_transcription():
         print("SRT transcription completed.")
 
         # Now create TXT output from the SRT
-        spoken_lines = []  # List to collect spoken lines
+        spoken_lines = []
         with open(output_srt_path, 'r', encoding='utf-8') as srt_file:
             for line in srt_file:
                 # Skip timestamps and only write the spoken text lines
@@ -76,16 +82,16 @@ def run_transcription():
 
 def on_activate():
     """Method called when the shortcut is pressed."""
-    global recording_thread
-    if recording_thread is None or not recording_thread.is_alive():
-        recording_thread = threading.Thread(target=record_audio, args=(audio_file_path, 10))
-        recording_thread.start()
-        time.sleep(11)  # Ensure recording lasts enough time before transcription
-        transcription_thread = threading.Thread(target=run_transcription)
-        transcription_thread.start()
+    global recording_thread, is_recording
 
-def for_canonical(f):
-    return lambda k: f(k)
+    if not is_recording:
+        # Start recording if not already recording
+        recording_thread = threading.Thread(target=record_audio, args=(audio_file_path,))
+        recording_thread.start()
+    else:
+        # Stop recording if it is currently recording
+        is_recording = False
+        print("Stopping the recording...")
 
 def main():
     print("Available audio devices:")
