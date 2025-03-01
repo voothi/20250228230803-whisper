@@ -26,7 +26,7 @@ recording_thread = None
 copy_to_clipboard = False
 use_timestamp = False
 model_selected = "base"  # Default value
-language_selected = "ru"  # Default language
+language_selected = None  # Default value
 timestamp_str = ""
 audio_file_path = ""
 output_srt_path = ""
@@ -75,9 +75,12 @@ def run_transcription():
             "--output_dir", os.path.dirname(output_srt_path),
             "--output_format", "srt",
             "--threads", "4",
-            "--sentence",
-            "--language", language_selected  # Use the updated language_selected value
+            "--sentence"
         ]
+        # Add the --language argument only if language_selected is not None
+        if language_selected is not None:
+            srt_command.extend(["--language", language_selected])
+        
         subprocess.run(srt_command, check=True, capture_output=True, text=True)
         print("SRT transcription completed.")
 
@@ -149,7 +152,7 @@ def main():
     parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
     parser.add_argument("--model", choices=["base", "medium"], default="base",  # Default model is "base"
                         help="Select Whisper model version (base or medium).")
-    parser.add_argument("--language", choices=["en", "de", "ru", "uk"], default="ru",
+    parser.add_argument("--language", choices=["de", "en", "ru", "uk"], default=None,  # No default language
                         help="Select language for transcription.")
     parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")  # Add tray argument
     args = parser.parse_args()
