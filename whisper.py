@@ -10,24 +10,23 @@ import pyperclip
 from datetime import datetime
 import pystray
 from PIL import Image
-from io import BytesIO
 import sys
 import time
 
-# Configuration parameters
+# Configuration parameters for paths
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
 base_dir = r"U:\voothi\20250228230803-whisper\tmp"
-os.makedirs(base_dir, exist_ok=True)  # Create a directory if it does not exist
+os.makedirs(base_dir, exist_ok=True)  # Create a directory if it does not already exist
 
-# Global variables for managing state and paths
+# Global state management variables
 transcribing = False
 is_recording = False
 audio_data = []
 recording_thread = None
 copy_to_clipboard = False
 use_timestamp = False
-model_selected = "base"  # Default value
-language_selected = None  # Default value
+model_selected = "base"
+language_selected = None
 timestamp_str = ""
 audio_file_path = ""
 output_srt_path = ""
@@ -60,31 +59,30 @@ def record_audio(sample_rate=44100):
         is_recording = False
 
 def run_transcription():
-    global transcribing, output_srt_path, output_txt_path, model_selected, language_selected  # Ensure model_selected and language_selected are global
+    global transcribing, output_srt_path, output_txt_path, model_selected, language_selected
     if transcribing:
         print("Transcription is already running.")
         return
     transcribing = True
     print("Starting transcription...")
+    
+    # Command to run the transcription
     try:
         model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"
         srt_command = [
             whisper_faster_path,
             audio_file_path,
-            "--model", model_selected,  # Use the updated model_selected value
+            "--model", model_selected,
             "--model_dir", model_path,
             "--output_dir", os.path.dirname(output_srt_path),
             "--output_format", "srt",
             "--threads", "4",
             "--sentence"
         ]
-        # Add the --language argument only if language_selected is not None
         if language_selected is not None:
             srt_command.extend(["--language", language_selected])
-        
-        # Print the full command being executed
-        print(f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n")
 
+        print(f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n")
         subprocess.run(srt_command, check=True, capture_output=True, text=True)
         print("SRT transcription completed.")
 
@@ -112,7 +110,7 @@ def generate_timestamp():
 
 def on_activate():
     global recording_thread, is_recording, timestamp_str, audio_file_path, output_srt_path, output_txt_path
-    if not is_recording:
+    if not is_recording:        
         if use_timestamp:
             timestamp_str = generate_timestamp()
         else:
@@ -128,8 +126,10 @@ def on_activate():
 
 def restart_with_language(language):
     global icon
-    icon.stop()  # Останавливаем текущую иконку
-    # Перезапуск скрипта с выбранным языком и другими аргументами командной строки
+    if is_recording or transcribing:  # Check if recording or transcribing is active
+        print("Please wait until the current recording or transcription is finished before restarting.")
+        return
+    icon.stop()  # Stop the system tray icon
     python = sys.executable
     args = sys.argv[1:]
     args.append(f"--language={language}")
@@ -137,15 +137,15 @@ def restart_with_language(language):
     print(f"\nRestarting with language: {language}\n")  # Condensed print statements
     
     subprocess.Popen([python, __file__] + args)
-    sys.exit(0)  # Завершаем текущий процесс
+    sys.exit(0)  # Exit current process
 
 def create_icon():
     global icon
     image = Image.new('RGB', (16, 16), color='blue')
     icon = pystray.Icon(
-        "Whisper", 
-        image, 
-        "Audio Recorder and Transcriber", 
+        "Whisper",
+        image,
+        "Audio Recorder and Transcriber",
         menu=pystray.Menu(
             pystray.MenuItem('Record', on_activate),
             pystray.MenuItem('Restart', restart),
@@ -162,36 +162,38 @@ def create_icon():
 
 def restart():
     global icon
-    icon.stop()  # Останавливаем текущую иконку
-    # Перезапуск скрипта с теми же аргументами командной строки
+    if is_recording or transcribing:  # Check if busy with recording/transcribing
+        print("Please finish current tasks before restarting.")
+        return
+    icon.stop()  # Stop the system tray icon
     python = sys.executable
     subprocess.Popen([python, __file__] + sys.argv[1:])
 
     print(f"\nRestarting...\n")
 
-    sys.exit(0)  # Завершаем текущий процесс
+    sys.exit(0)
 
 def main():
-    global copy_to_clipboard, use_timestamp, model_selected, language_selected, tray  # Add tray to global variables
+    global copy_to_clipboard, use_timestamp, model_selected, language_selected, tray
     parser = argparse.ArgumentParser(description="Audio recorder and transcriber with Whisper.")
     parser.add_argument("--clipboard", action="store_true", help="Copy transcribed text to clipboard.")
     parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
-    parser.add_argument("--model", choices=["base", "medium"], default="base",  # Default model is "base"
+    parser.add_argument("--model", choices=["base", "medium"], default="base",
                         help="Select Whisper model version (base or medium).")
-    parser.add_argument("--language", choices=["en", "de", "ru", "uk"], default=None,  # No default language
+    parser.add_argument("--language", choices=["en", "de", "ru", "uk"], default=None,
                         help="Select language for transcription.")
-    parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")  # Add tray argument
+    parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
     use_timestamp = args.timestamp
-    model_selected = args.model  # Update model_selected with the parsed value
-    language_selected = args.language  # Update language_selected with the parsed value
-    tray = args.tray  # Update tray with the parsed value
+    model_selected = args.model
+    language_selected = args.language
+    tray = args.tray
 
     print("Available audio devices:")
     print(sd.query_devices())
 
-    if tray:  # Check if tray should be created
+    if tray:  # Create the system tray icon if specified
         tray_thread = threading.Thread(target=create_icon)
         tray_thread.start()
 
