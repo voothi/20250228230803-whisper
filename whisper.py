@@ -20,6 +20,7 @@ is_recording = False
 audio_data = []
 recording_thread = None
 copy_to_clipboard = False
+use_timestamp = False
 timestamp_str = ""
 audio_file_path = ""
 output_srt_path = ""
@@ -90,13 +91,19 @@ def run_transcription():
     finally:
         transcribing = False
 
+def generate_timestamp():
+    return datetime.now().strftime("%Y%m%d%H%M%S")
+
 def on_activate():
     global recording_thread, is_recording, timestamp_str, audio_file_path, output_srt_path, output_txt_path
     if not is_recording:
-        timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
-        audio_file_path = os.path.join(base_dir, f"{timestamp_str}-audio.wav")
-        output_srt_path = os.path.join(base_dir, f"{timestamp_str}-audio.srt")
-        output_txt_path = os.path.join(base_dir, f"{timestamp_str}-audio.txt")
+        if use_timestamp:
+            timestamp_str = generate_timestamp()
+        else:
+            timestamp_str = ""
+        audio_file_path = os.path.join(base_dir, f"{timestamp_str}-audio.wav" if timestamp_str else "audio.wav")
+        output_srt_path = os.path.join(base_dir, f"{timestamp_str}-audio.srt" if timestamp_str else "audio.srt")
+        output_txt_path = os.path.join(base_dir, f"{timestamp_str}-audio.txt" if timestamp_str else "audio.txt")
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
     else:
@@ -104,11 +111,14 @@ def on_activate():
         print("Stopping recording...")
 
 def main():
-    global copy_to_clipboard
+    global copy_to_clipboard, use_timestamp
     parser = argparse.ArgumentParser(description="Audio recorder and transcriber with Whisper.")
     parser.add_argument("--clipboard", action="store_true", help="Copy transcribed text to clipboard.")
+    parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
+    use_timestamp = args.timestamp
+
     print("Available audio devices:")
     print(sd.query_devices())
     with keyboard.GlobalHotKeys({'<ctrl>+<alt>+w': on_activate}) as listener:
