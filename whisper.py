@@ -5,6 +5,8 @@ import subprocess
 import threading
 import os
 import numpy as np
+import argparse
+import pyperclip
 
 # Parameters for paths and audio configurations
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
@@ -17,6 +19,7 @@ transcribing = False
 is_recording = False
 audio_data = []  # Global list for audio data storage
 recording_thread = None
+copy_to_clipboard = False
 
 def record_audio(sample_rate=44100):
     """ Record audio from the microphone using a non-blocking stream. """
@@ -77,6 +80,9 @@ def run_transcription():
         with open(output_txt_path, 'w', encoding='utf-8') as txt_file:
             txt_file.write('\n'.join(spoken_lines))
         print("TXT transcription created from SRT.")
+        if copy_to_clipboard:
+            pyperclip.copy('\n'.join(spoken_lines))
+            print("Transcription copied to clipboard.")
     except subprocess.CalledProcessError as e:
         print(f"Transcription error: {e.stderr}")
     except Exception as e:
@@ -97,6 +103,12 @@ def on_activate():
         print("Stopping recording...")
 
 def main():
+    global copy_to_clipboard
+    parser = argparse.ArgumentParser(description="Audio recorder and transcriber with Whisper.")
+    parser.add_argument("--clipboard", action="store_true", help="Copy transcribed text to clipboard.")
+    args = parser.parse_args()
+    copy_to_clipboard = args.clipboard
+
     print("Available audio devices:")
     print(sd.query_devices())
     # Set up the keyboard listener for Ctrl + Alt + W
