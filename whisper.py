@@ -54,11 +54,17 @@ def run_transcription():
         print("SRT transcription completed.")
 
         # Now create TXT output from the SRT
-        with open(output_srt_path, 'r', encoding='utf-8') as srt_file, open(output_txt_path, 'w', encoding='utf-8') as txt_file:
+        spoken_lines = []  # List to collect spoken lines
+        with open(output_srt_path, 'r', encoding='utf-8') as srt_file:
             for line in srt_file:
                 # Skip timestamps and only write the spoken text lines
                 if '-->' not in line and line.strip() != "" and not line.strip().isdigit():
-                    txt_file.write(line.strip() + '\n')
+                    spoken_lines.append(line.strip())  # Accumulate spoken lines
+
+        # Write collected lines to the TXT file, joining with '\n'
+        with open(output_txt_path, 'w', encoding='utf-8') as txt_file:
+            txt_file.write('\n'.join(spoken_lines))  # Join lines without adding extra newline
+
         print("TXT transcription created from SRT.")
 
     except subprocess.CalledProcessError as e:
