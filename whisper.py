@@ -79,18 +79,19 @@ def main():
     print(sd.query_devices())  # Show the list of audio devices
 
     # Start recording immediately upon starting the utility
-    threading.Thread(target=record_audio, args=(audio_file_path, 10)).start()
+    recording_thread = threading.Thread(target=record_audio, args=(audio_file_path, 10))
+    recording_thread.start()
 
     # Wait for the recording to finish before starting transcription
     time.sleep(11)  # May need to adjust if recording longer
-    threading.Thread(target=run_transcription).start()
+    transcription_thread = threading.Thread(target=run_transcription)
+    transcription_thread.start()
 
-    print("Program is running. Recording and transcription are in progress.")
-    print("Press Esc to exit.")
+    # Wait for both threads to finish
+    recording_thread.join()
+    transcription_thread.join()
 
-    # Set up key listening (not used, but left for future needs)
-    with keyboard.Listener(on_press=lambda key: None, on_release=lambda key: None) as listener:
-        listener.join()
+    print("Program has finished processing. Exiting...")
 
 if __name__ == "__main__":
     main()
