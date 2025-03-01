@@ -7,37 +7,37 @@ import os
 import numpy as np
 import argparse
 import pyperclip
+from datetime import datetime
 
-# Parameters for paths and audio configurations
+# Конфигурационные параметры
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
-audio_file_path = r"U:\voothi\20250228230803-whisper\tmp\audio.wav"
-output_srt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.srt"
-output_txt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.txt"
+base_dir = r"U:\voothi\whisper\tmp"
+os.makedirs(base_dir, exist_ok=True)  # Создать директорию, если не существует
 
-# Global variables for state management
+# Глобальные переменные для управления состоянием и путями
 transcribing = False
 is_recording = False
-audio_data = []  # Global list for audio data storage
+audio_data = []
 recording_thread = None
 copy_to_clipboard = False
+timestamp_str = ""
+audio_file_path = ""
+output_srt_path = ""
+output_txt_path = ""
 
 def record_audio(sample_rate=44100):
-    """ Record audio from the microphone using a non-blocking stream. """
-    global is_recording, audio_data
-    
+    global is_recording, audio_data, audio_file_path
     print("Recording started... Press Ctrl + Alt + W again to stop.")
     is_recording = True
-    audio_data.clear()  # Clear previous audio data
-    
+    audio_data.clear()
+
     def callback(indata, frames, time, status):
-        """ Callback function to capture audio chunks. """
         audio_data.append(indata.copy())
-    
+
     try:
         with sd.InputStream(samplerate=sample_rate, channels=1, dtype='int16', callback=callback):
             while is_recording:
-                sd.sleep(100)  # Reduce CPU usage
-        # After stopping, save the recorded audio
+                sd.sleep(100)
         if audio_data:
             full_audio = np.concatenate(audio_data, axis=0)
             write(audio_file_path, sample_rate, full_audio)
@@ -51,7 +51,7 @@ def record_audio(sample_rate=44100):
         is_recording = False
 
 def run_transcription():
-    global transcribing
+    global transcribing, output_srt_path, output_txt_path
     if transcribing:
         print("Transcription is already running.")
         return
@@ -59,7 +59,6 @@ def run_transcription():
     print("Starting transcription...")
     try:
         model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"
-        # Create SRT output
         srt_command = [
             whisper_faster_path,
             audio_file_path,
@@ -71,7 +70,7 @@ def run_transcription():
         ]
         subprocess.run(srt_command, check=True, capture_output=True, text=True)
         print("SRT transcription completed.")
-        # Create TXT output from the SRT
+
         spoken_lines = []
         with open(output_srt_path, 'r', encoding='utf-8') as srt_file:
             for line in srt_file:
@@ -80,6 +79,7 @@ def run_transcription():
         with open(output_txt_path, 'w', encoding='utf-8') as txt_file:
             txt_file.write('\n'.join(spoken_lines))
         print("TXT transcription created from SRT.")
+
         if copy_to_clipboard:
             pyperclip.copy('\n'.join(spoken_lines))
             print("Transcription copied to clipboard.")
@@ -91,14 +91,15 @@ def run_transcription():
         transcribing = False
 
 def on_activate():
-    """ Toggle recording on/off with the same shortcut. """
-    global recording_thread, is_recording
+    global recording_thread, is_recording, timestamp_str, audio_file_path, output_srt_path, output_txt_path
     if not is_recording:
-        # Start a new recording thread
+        timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
+        audio_file_path = os.path.join(base_dir, f"{timestamp_str}-audio.wav")
+        output_srt_path = os.path.join(base_dir, f"{timestamp_str}-audio.srt")
+        output_txt_path = os.path.join(base_dir, f"{timestamp_str}-audio.txt")
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
     else:
-        # Signal the recording to stop
         is_recording = False
         print("Stopping recording...")
 
@@ -108,10 +109,8 @@ def main():
     parser.add_argument("--clipboard", action="store_true", help="Copy transcribed text to clipboard.")
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
-
     print("Available audio devices:")
     print(sd.query_devices())
-    # Set up the keyboard listener for Ctrl + Alt + W
     with keyboard.GlobalHotKeys({'<ctrl>+<alt>+w': on_activate}) as listener:
         print("Listening for Ctrl + Alt + W...")
         listener.join()
