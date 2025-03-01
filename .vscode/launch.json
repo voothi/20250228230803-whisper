@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File with --clipboard",
+            "name": "Python Debugger: Current File with --clipboard, --timestamp",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
@@ -14,6 +14,18 @@
                 // "${command:pickArgs}",
                 "--clipboard",
                 "--timestamp"
+            ],
+            "python": "${workspaceFolder}/venv/Scripts/python.exe"
+        },
+        {
+            "name": "Python Debugger: Current File with --clipboard",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                // "${command:pickArgs}",
+                "--clipboard",
             ],
             "python": "${workspaceFolder}/venv/Scripts/python.exe"
         }
