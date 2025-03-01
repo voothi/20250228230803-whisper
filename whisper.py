@@ -6,30 +6,32 @@ import threading
 import os
 import numpy as np
 
-# Parameters
+# Parameters for paths and audio configurations
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
 audio_file_path = r"U:\voothi\20250228230803-whisper\tmp\audio.wav"
 output_srt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.srt"
 output_txt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.txt"
 
-# Global variables for tracking
+# Global variables for state management
 transcribing = False
+is_recording = False
+audio_data = []  # Global list for audio data storage
 recording_thread = None
-is_recording = False  # Track if we are currently recording
 
-def record_audio(filename, sample_rate=44100, chunk_size=1024):
-    """ Record audio from the microphone and save it to the specified filename. """
-    global is_recording
+def record_audio(filename, sample_rate=44100):
+    """ Record audio from the microphone until stopped by the user. """
+    global is_recording, audio_data
     
     print("Recording started... Press Ctrl + Alt + W again to stop.")
     is_recording = True
-    audio_data = []
-    
+
     try:
+        audio_data.clear()  # Clear previous audio data
+        # Start recording
         while is_recording:
-            chunk = sd.rec(chunk_size, samplerate=sample_rate, channels=1, dtype='int16')
+            chunk = sd.rec(1024, samplerate=sample_rate, channels=1, dtype='int16')
             sd.wait()  # Wait until the chunk has been recorded
-            audio_data.append(chunk)
+            audio_data.append(chunk)  # Store audio chunk in global list
 
         # If recording has stopped, finalize audio capture
         if audio_data:
@@ -68,14 +70,14 @@ def run_transcription():
         subprocess.run(srt_command, check=True, capture_output=True, text=True)
         print("SRT transcription completed.")
 
-        # Now create TXT output from the SRT
+        # Create TXT output from the SRT
         spoken_lines = []
         with open(output_srt_path, 'r', encoding='utf-8') as srt_file:
             for line in srt_file:
                 if '-->' not in line and line.strip() != "" and not line.strip().isdigit():
-                    spoken_lines.append(line.strip())  # Accumulate spoken lines
+                    spoken_lines.append(line.strip())
 
-        # Write collected lines to the TXT file, joining with '\n'
+        # Write collected lines to the TXT file
         with open(output_txt_path, 'w', encoding='utf-8') as txt_file:
             txt_file.write('\n'.join(spoken_lines))
 
@@ -93,11 +95,11 @@ def on_activate():
     global recording_thread, is_recording
 
     if not is_recording:
-        # Start recording if not already recording
+        # Start recording if not currently recording
         recording_thread = threading.Thread(target=record_audio, args=(audio_file_path,))
         recording_thread.start()
     else:
-        # Stop recording if it is currently recording
+        # Stop recording if currently recording
         is_recording = False
         print("Stopping the recording...")
 
@@ -106,7 +108,6 @@ def main():
     print(sd.query_devices())
 
     # Set up the keyboard listener for Ctrl + Alt + W
-    # Ensure that the listener is active and waits for key presses
     with keyboard.GlobalHotKeys({'<ctrl>+<alt>+w': on_activate}) as listener:
         print("Listening for Ctrl + Alt + W...")
         listener.join()
