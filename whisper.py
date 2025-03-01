@@ -28,33 +28,41 @@ def record_audio(filename, duration=10, sample_rate=44100):
 def run_transcription():
     global transcribing
     if transcribing:
-        print("Транскрибирование уже запущено.")
+        print("Transcribing is already running.")
         return
 
     transcribing = True
-    print("Начало транскрибирования...")
+    print("Starting transcription...")
 
     try:
-        model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"  # Замените на имя известной модели, как `base`, `small`, и т.д. 
+        model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"  # Specify your model path
 
-        # Выполняем команду whisper-faster
-        command = [
+        # Create SRT output
+        srt_command = [
             whisper_faster_path,
             audio_file_path,
-            "--model", "medium",  # Укажите модель
-            "--model_dir", model_path,  # Укажите директорию модели
-            "--output_dir", os.path.dirname(output_file_path),  # Укажите выходную директорию
-            "--output_format", "txt",  # Укажите формат
+            "--model", "medium",  # Use medium model
+            "--model_dir", model_path,  # Specify model directory
+            "--output_dir", os.path.dirname(output_srt_path),  # Output directory
+            "--output_format", "srt",  # Output format for SRT
+            "--sentence",
         ]
 
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        subprocess.run(srt_command, check=True, capture_output=True, text=True)
+        print("SRT transcription completed.")
 
-        print("Транскрипция завершена.")
-        print(result.stdout)
+        # Now create TXT output from the SRT
+        with open(output_srt_path, 'r', encoding='utf-8') as srt_file, open(output_transcript_path, 'w', encoding='utf-8') as txt_file:
+            for line in srt_file:
+                # Skip timestamps and only write the spoken text lines
+                if '-->' not in line and line.strip() != "":
+                    txt_file.write(line.strip() + '\n')
+        print("TXT transcription created from SRT.")
+
     except subprocess.CalledProcessError as e:
-        print(f"Произошла ошибка при транскрибировании: {e.stderr}")
+        print(f"An error occurred during transcription: {e.stderr}")
     except Exception as e:
-        print(f"Произошла ошибка: {e}")
+        print(f"An error occurred: {e}")
     finally:
         transcribing = False
 
