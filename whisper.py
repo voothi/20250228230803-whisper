@@ -1,4 +1,3 @@
-# whisper.py
 import sounddevice as sd
 from scipy.io.wavfile import write
 from pynput import keyboard
@@ -10,11 +9,12 @@ import time
 # Parameters
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
 audio_file_path = r"U:\voothi\20250228230803-whisper\tmp\audio.wav"
-output_srt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.srt"  # Added SRT output path
-output_txt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.txt"  # Consistent output TXT path
+output_srt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.srt"
+output_txt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.txt"
 
 # Global variables for tracking
 transcribing = False
+recording_thread = None
 
 def record_audio(filename, duration=10, sample_rate=44100):
     """ Record audio from the microphone and save it to the specified filename. """
@@ -37,16 +37,16 @@ def run_transcription():
     print("Starting transcription...")
 
     try:
-        model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"  # Specify your model path
+        model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"
 
         # Create SRT output
         srt_command = [
             whisper_faster_path,
             audio_file_path,
-            "--model", "medium",  # Use medium model
-            "--model_dir", model_path,  # Specify model directory
-            "--output_dir", os.path.dirname(output_srt_path),  # Output directory
-            "--output_format", "srt",  # Output format for SRT
+            "--model", "medium",
+            "--model_dir", model_path,
+            "--output_dir", os.path.dirname(output_srt_path),
+            "--output_format", "srt",
             "--sentence",
         ]
 
@@ -74,24 +74,26 @@ def run_transcription():
     finally:
         transcribing = False
 
+def on_activate():
+    """Method called when the shortcut is pressed."""
+    global recording_thread
+    if recording_thread is None or not recording_thread.is_alive():
+        recording_thread = threading.Thread(target=record_audio, args=(audio_file_path, 10))
+        recording_thread.start()
+        time.sleep(11)  # Ensure recording lasts enough time before transcription
+        transcription_thread = threading.Thread(target=run_transcription)
+        transcription_thread.start()
+
+def for_canonical(f):
+    return lambda k: f(k)
+
 def main():
     print("Available audio devices:")
-    print(sd.query_devices())  # Show the list of audio devices
+    print(sd.query_devices())
 
-    # Start recording immediately upon starting the utility
-    recording_thread = threading.Thread(target=record_audio, args=(audio_file_path, 10))
-    recording_thread.start()
-
-    # Wait for the recording to finish before starting transcription
-    time.sleep(11)  # May need to adjust if recording longer
-    transcription_thread = threading.Thread(target=run_transcription)
-    transcription_thread.start()
-
-    # Wait for both threads to finish
-    recording_thread.join()
-    transcription_thread.join()
-
-    print("Program has finished processing. Exiting...")
+    # Set up the keyboard listener for Ctrl + Alt + W
+    with keyboard.GlobalHotKeys({'<ctrl>+<alt>+w': on_activate}) as listener:
+        listener.join()
 
 if __name__ == "__main__":
     main()
