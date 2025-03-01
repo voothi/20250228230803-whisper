@@ -11,6 +11,7 @@ from datetime import datetime
 import pystray
 from PIL import Image
 from io import BytesIO
+import sys
 
 # Configuration parameters
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
@@ -118,18 +119,26 @@ def on_activate():
 
 def create_icon():
     global icon
-    # Создаем изображение программно вместо бинарной строки
-    image = Image.new('RGB', (16, 16), color='blue')  # простая синяя иконка 16x16
+    image = Image.new('RGB', (16, 16), color='blue')
     icon = pystray.Icon(
         "Whisper", 
         image, 
         "Audio Recorder and Transcriber", 
         menu=pystray.Menu(
             pystray.MenuItem('Record', on_activate),
+            pystray.MenuItem('Restart', restart),  # Добавлен пункт Restart
             pystray.MenuItem('Exit', lambda: icon.stop())
         )
     )
     icon.run()
+
+def restart():
+    global icon
+    icon.stop()  # Останавливаем текущую иконку
+    # Перезапуск скрипта с теми же аргументами командной строки
+    python = sys.executable
+    subprocess.Popen([python, __file__] + sys.argv[1:])
+    sys.exit(0)  # Завершаем текущий процесс
 
 def main():
     global copy_to_clipboard, use_timestamp, model_selected  # Add model_selected to global variables
