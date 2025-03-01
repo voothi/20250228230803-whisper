@@ -7,23 +7,25 @@ import threading
 import os
 import time
 
-# Параметры
+# Parameters
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
-audio_file_path = r"U:\voothi\20250228230803-whisper\tmp\input_audio_file.wav"
-output_file_path = r"U:\voothi\20250228230803-whisper\tmp\output_transcript.txt"
+audio_file_path = r"U:\voothi\20250228230803-whisper\tmp\audio.wav"
+output_srt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.srt"  # Added SRT output path
+output_txt_path = r"U:\voothi\20250228230803-whisper\tmp\audio.txt"  # Consistent output TXT path
 
-# Глобальные переменные для отслеживания
+# Global variables for tracking
 transcribing = False
 
 def record_audio(filename, duration=10, sample_rate=44100):
+    """ Record audio from the microphone and save it to the specified filename. """
     try:
-        print("Запись началась...")
+        print("Recording started...")
         audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
-        sd.wait()  # Ждем завершения записи
+        sd.wait()  # Wait until recording is finished
         write(filename, sample_rate, audio_data)
-        print("Запись сохранена.")
+        print("Recording saved.")
     except Exception as e:
-        print(f"Ошибка записи: {e}")
+        print(f"Recording error: {e}")
 
 def run_transcription():
     global transcribing
@@ -52,7 +54,7 @@ def run_transcription():
         print("SRT transcription completed.")
 
         # Now create TXT output from the SRT
-        with open(output_srt_path, 'r', encoding='utf-8') as srt_file, open(output_transcript_path, 'w', encoding='utf-8') as txt_file:
+        with open(output_srt_path, 'r', encoding='utf-8') as srt_file, open(output_txt_path, 'w', encoding='utf-8') as txt_file:
             for line in srt_file:
                 # Skip timestamps and only write the spoken text lines
                 if '-->' not in line and line.strip() != "":
@@ -67,20 +69,20 @@ def run_transcription():
         transcribing = False
 
 def main():
-    print("Доступные аудиоустройства:")
-    print(sd.query_devices())  # Покажет список устройств
+    print("Available audio devices:")
+    print(sd.query_devices())  # Show the list of audio devices
 
-    # Запускаем запись сразу при запуске утилиты
+    # Start recording immediately upon starting the utility
     threading.Thread(target=record_audio, args=(audio_file_path, 10)).start()
 
-    # Ждем, чтобы запись завершилась перед запуском транскрипции
-    time.sleep(11)  # Увеличьте время, если необходимо, в зависимости от длины записи
+    # Wait for the recording to finish before starting transcription
+    time.sleep(11)  # May need to adjust if recording longer
     threading.Thread(target=run_transcription).start()
 
-    print("Программа запущена. Запись и транскрипция выполняются.")
-    print("Нажмите Esc для выхода.")
+    print("Program is running. Recording and transcription are in progress.")
+    print("Press Esc to exit.")
 
-    # Устанавливаем прослушивание клавиш (не используется, но оставлено на случай, если потребуется)
+    # Set up key listening (not used, but left for future needs)
     with keyboard.Listener(on_press=lambda key: None, on_release=lambda key: None) as listener:
         listener.join()
 
