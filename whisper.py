@@ -35,7 +35,7 @@ icon = None
 
 def record_audio(sample_rate=44100):
     global is_recording, audio_data, audio_file_path
-    print("Recording started... Press Ctrl + Alt + W again to stop.")
+    print("\nRecording started... Press Ctrl + Alt + W again to stop.")
     is_recording = True
     audio_data.clear()
 
@@ -81,6 +81,9 @@ def run_transcription():
         if language_selected is not None:
             srt_command.extend(["--language", language_selected])
         
+        # Print the full command being executed
+        print(f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n")
+
         subprocess.run(srt_command, check=True, capture_output=True, text=True)
         print("SRT transcription completed.")
 
@@ -129,6 +132,9 @@ def restart_with_language(language):
     python = sys.executable
     args = sys.argv[1:]
     args.append(f"--language={language}")
+    
+    print(f"\nRestarting with language: {language}\n")  # Condensed print statements
+    
     subprocess.Popen([python, __file__] + args)
     sys.exit(0)  # Завершаем текущий процесс
 
@@ -186,7 +192,7 @@ def main():
         tray_thread.start()
 
     with keyboard.GlobalHotKeys({'<ctrl>+<alt>+w': on_activate}) as listener:
-        print("Listening for Ctrl + Alt + W...")
+        print("\nListening for Ctrl + Alt + W...")
         listener.join()
 
 if __name__ == "__main__":
