@@ -67,6 +67,7 @@ def run_transcription():
             "--model_dir", model_path,
             "--output_dir", os.path.dirname(output_srt_path),
             "--output_format", "srt",
+            "--threads", "4",
             "--sentence",
         ]
         subprocess.run(srt_command, check=True, capture_output=True, text=True)
