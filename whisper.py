@@ -131,13 +131,14 @@ def restart_with_language(language):
         return
     icon.stop()  # Stop the system tray icon
     python = sys.executable
-    args = sys.argv[1:]
-    args.append(f"--language={language}")
+    script_to_run = __file__
+    args = sys.argv[1:] + [f"--language={language}"]
     
-    print(f"\nRestarting with language: {language}\n")  # Condensed print statements
+    print(f"\nRestarting with language: {language}\n")
     
-    subprocess.Popen([python, __file__] + args)
-    sys.exit(0)  # Exit current process
+    # Using subprocess to call the wrapper script
+    subprocess.Popen([python, "restart.py", script_to_run] + args)
+    os._exit()  # Terminate the current process
 
 def create_icon():
     global icon
@@ -167,11 +168,13 @@ def restart():
         return
     icon.stop()  # Stop the system tray icon
     python = sys.executable
-    subprocess.Popen([python, __file__] + sys.argv[1:])
-
+    script_to_run = __file__
+    
     print(f"\nRestarting...\n")
-
-    sys.exit(0)
+    
+    # Using subprocess to call the wrapper script
+    subprocess.Popen([python, "restart.py", script_to_run] + sys.argv[1:])
+    os._exit()  # Terminate the current process
 
 def main():
     global copy_to_clipboard, use_timestamp, model_selected, language_selected, tray
