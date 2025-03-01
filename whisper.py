@@ -36,16 +36,18 @@ def run_transcription():
 
     try:
         # Укажите путь к модели
-        model_path = r"C:\Tools\open-webui\venv\Lib\site-packages\open_webui\data\cache\whisper\models\models--Systran--faster-whisper-base\snapshots\ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66\model.bin"
+        model_path = r"C:\Tools\open-webui\venv\Lib\site-packages\open_webui\data\cache\whisper\models\models--Systran--faster-whisper-base"
 
         # Выполняем команду whisper-faster
         command = [
             whisper_faster_path,
             audio_file_path,
             "--model", model_path,
-            "--output", output_file_path,
-            # Добавьте другие необходимые параметры, если нужно
+            "--output_dir", os.path.dirname(output_file_path),  # Указываем путь к директории для вывода
+            "--output_format", "txt",  # Указываем формат выходного файла
+            # Добавьте другие необходимые параметры сюда
         ]
+        
         result = subprocess.run(command, check=True, capture_output=True, text=True)
 
         print("Транскрипция завершена.")
