@@ -122,6 +122,16 @@ def on_activate():
         is_recording = False
         print("Stopping recording...")
 
+def restart_with_language(language):
+    global icon
+    icon.stop()  # Останавливаем текущую иконку
+    # Перезапуск скрипта с выбранным языком и другими аргументами командной строки
+    python = sys.executable
+    args = sys.argv[1:]
+    args.append(f"--language={language}")
+    subprocess.Popen([python, __file__] + args)
+    sys.exit(0)  # Завершаем текущий процесс
+
 def create_icon():
     global icon
     image = Image.new('RGB', (16, 16), color='blue')
@@ -131,7 +141,13 @@ def create_icon():
         "Audio Recorder and Transcriber", 
         menu=pystray.Menu(
             pystray.MenuItem('Record', on_activate),
-            pystray.MenuItem('Restart', restart),  # Добавлен пункт Restart
+            pystray.MenuItem('Restart', restart),
+            pystray.MenuItem('Set Language', pystray.Menu(
+                pystray.MenuItem('English', lambda: restart_with_language('en')),
+                pystray.MenuItem('Deutsch', lambda: restart_with_language('de')),
+                pystray.MenuItem('Russian', lambda: restart_with_language('ru')),
+                pystray.MenuItem('Ukrainian', lambda: restart_with_language('uk')),
+            )),
             pystray.MenuItem('Exit', lambda: icon.stop())
         )
     )
@@ -152,7 +168,7 @@ def main():
     parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
     parser.add_argument("--model", choices=["base", "medium"], default="base",  # Default model is "base"
                         help="Select Whisper model version (base or medium).")
-    parser.add_argument("--language", choices=["de", "en", "ru", "uk"], default=None,  # No default language
+    parser.add_argument("--language", choices=["en", "de", "ru", "uk"], default=None,  # No default language
                         help="Select language for transcription.")
     parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")  # Add tray argument
     args = parser.parse_args()
