@@ -28,6 +28,32 @@
                 "--clipboard",
             ],
             "python": "${workspaceFolder}/venv/Scripts/python.exe"
+        },
+        {
+            "name": "Python Debugger: Current File with --clipboard --model base",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                // "${command:pickArgs}",
+                "--clipboard",
+                "--model", "base"
+            ],
+            "python": "${workspaceFolder}/venv/Scripts/python.exe"
+        },
+        {
+            "name": "Python Debugger: Current File with --clipboard --model medium",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                // "${command:pickArgs}",
+                "--clipboard",
+                "--model", "medium"
+            ],
+            "python": "${workspaceFolder}/venv/Scripts/python.exe"
         }
     ]
 }

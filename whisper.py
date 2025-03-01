@@ -21,6 +21,7 @@ audio_data = []
 recording_thread = None
 copy_to_clipboard = False
 use_timestamp = False
+model_selected = "base"  # Значение по умолчанию
 timestamp_str = ""
 audio_file_path = ""
 output_srt_path = ""
@@ -52,7 +53,7 @@ def record_audio(sample_rate=44100):
         is_recording = False
 
 def run_transcription():
-    global transcribing, output_srt_path, output_txt_path
+    global transcribing, output_srt_path, output_txt_path, model_selected
     if transcribing:
         print("Transcription is already running.")
         return
@@ -63,7 +64,7 @@ def run_transcription():
         srt_command = [
             whisper_faster_path,
             audio_file_path,
-            "--model", "base",
+            "--model", model_selected,
             "--model_dir", model_path,
             "--output_dir", os.path.dirname(output_srt_path),
             "--output_format", "srt",
@@ -112,13 +113,15 @@ def on_activate():
         print("Stopping recording...")
 
 def main():
-    global copy_to_clipboard, use_timestamp
+    global copy_to_clipboard, use_timestamp, model_selected
     parser = argparse.ArgumentParser(description="Audio recorder and transcriber with Whisper.")
     parser.add_argument("--clipboard", action="store_true", help="Copy transcribed text to clipboard.")
     parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
+    parser.add_argument("--model", choices=["base", "medium"], default="base",
+                        help="Select Whisper model version (base or medium).")
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
-    use_timestamp = args.timestamp  # Восстановили эту строку
+    use_timestamp = args.timestamp
 
     print("Available audio devices:")
     print(sd.query_devices())
