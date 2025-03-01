@@ -4,7 +4,6 @@ from pynput import keyboard
 import subprocess
 import threading
 import os
-import time
 import numpy as np
 
 # Parameters
@@ -18,27 +17,30 @@ transcribing = False
 recording_thread = None
 is_recording = False  # Track if we are currently recording
 
-def record_audio(filename, sample_rate=44100):
+def record_audio(filename, sample_rate=44100, chunk_size=1024):
     """ Record audio from the microphone and save it to the specified filename. """
     global is_recording
     
-    # Prepare to record
     print("Recording started... Press Ctrl + Alt + W again to stop.")
     is_recording = True
     audio_data = []
+    
+    try:
+        while is_recording:
+            chunk = sd.rec(chunk_size, samplerate=sample_rate, channels=1, dtype='int16')
+            sd.wait()  # Wait until the chunk has been recorded
+            audio_data.append(chunk)
 
-    # Recording in chunks
-    while is_recording:
-        chunk = sd.rec(int(sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
-        sd.wait()  # Wait until the chunk has been recorded
-        audio_data.append(chunk)
+        # If recording has stopped, finalize audio capture
+        if audio_data:
+            audio_data = np.concatenate(audio_data, axis=0)
+            write(filename, sample_rate, audio_data)  # Write the full audio to a file
+            print("Recording saved.")
+        else:
+            print("No audio data recorded.")
 
-    # Concatenate all chunks
-    audio_data = np.concatenate(audio_data, axis=0) if audio_data else np.array([])
-
-    sd.stop()  # Stop recording
-    write(filename, sample_rate, audio_data)  # Write the full audio to a file
-    print("Recording saved.")
+    except Exception as e:
+        print(f"An error occurred during recording: {e}")
 
 def run_transcription():
     global transcribing
@@ -70,13 +72,12 @@ def run_transcription():
         spoken_lines = []
         with open(output_srt_path, 'r', encoding='utf-8') as srt_file:
             for line in srt_file:
-                # Skip timestamps and only write the spoken text lines
                 if '-->' not in line and line.strip() != "" and not line.strip().isdigit():
                     spoken_lines.append(line.strip())  # Accumulate spoken lines
 
         # Write collected lines to the TXT file, joining with '\n'
         with open(output_txt_path, 'w', encoding='utf-8') as txt_file:
-            txt_file.write('\n'.join(spoken_lines))  # Join lines without adding extra newline
+            txt_file.write('\n'.join(spoken_lines))
 
         print("TXT transcription created from SRT.")
 
@@ -105,7 +106,9 @@ def main():
     print(sd.query_devices())
 
     # Set up the keyboard listener for Ctrl + Alt + W
+    # Ensure that the listener is active and waits for key presses
     with keyboard.GlobalHotKeys({'<ctrl>+<alt>+w': on_activate}) as listener:
+        print("Listening for Ctrl + Alt + W...")
         listener.join()
 
 if __name__ == "__main__":
