@@ -12,7 +12,8 @@
             "console": "integratedTerminal",
             "args": [
                 // "${command:pickArgs}",
-                "--clipboard"
+                "--clipboard",
+                "--timestamp"
             ],
             "python": "${workspaceFolder}/venv/Scripts/python.exe"
         }

@@ -11,7 +11,7 @@ from datetime import datetime
 
 # Конфигурационные параметры
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
-base_dir = r"U:\voothi\whisper\tmp"
+base_dir = r".\tmp"
 os.makedirs(base_dir, exist_ok=True)  # Создать директорию, если не существует
 
 # Глобальные переменные для управления состоянием и путями
@@ -117,7 +117,7 @@ def main():
     parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
-    use_timestamp = args.timestamp
+    use_timestamp = args.timestamp  # Восстановили эту строку
 
     print("Available audio devices:")
     print(sd.query_devices())
