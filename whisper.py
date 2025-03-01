@@ -9,8 +9,8 @@ import time
 
 # Параметры
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
-audio_file_path = r"U:\voothi\20250228230803-whisper\input_audio_file.wav"
-output_file_path = r"U:\voothi\20250228230803-whisper\output_transcript.txt"
+audio_file_path = r"U:\voothi\20250228230803-whisper\tmp\input_audio_file.wav"
+output_file_path = r"U:\voothi\20250228230803-whisper\tmp\output_transcript.txt"
 
 # Глобальные переменные для отслеживания
 transcribing = False
@@ -35,19 +35,18 @@ def run_transcription():
     print("Начало транскрибирования...")
 
     try:
-        # Укажите путь к модели
-        model_path = r"C:\Tools\open-webui\venv\Lib\site-packages\open_webui\data\cache\whisper\models\models--Systran--faster-whisper-base"
+        # model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models\faster-whisper-medium"  # Замените на имя известной модели, как `base`, `small`, и т.д. 
 
         # Выполняем команду whisper-faster
         command = [
             whisper_faster_path,
             audio_file_path,
-            "--model", model_path,
-            "--output_dir", os.path.dirname(output_file_path),  # Указываем путь к директории для вывода
-            "--output_format", "txt",  # Указываем формат выходного файла
-            # Добавьте другие необходимые параметры сюда
+            "--model", "medium",  # Укажите модель
+            "--model_dir", r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models",  # Укажите директорию модели
+            "--output_dir", os.path.dirname(output_file_path),  # Укажите выходную директорию
+            "--output_format", "txt",  # Укажите формат
         ]
-        
+
         result = subprocess.run(command, check=True, capture_output=True, text=True)
 
         print("Транскрипция завершена.")
