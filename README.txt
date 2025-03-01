@@ -1,3 +1,9 @@
+20250301152714
+U:\voothi\20250228230803-whisper\venv\Scripts\python.exe U:\voothi\20250228230803-whisper\whisper.py --clipboard --timestamp --model "base" --tray   
+
+
+
+
 20250228231046
 
  

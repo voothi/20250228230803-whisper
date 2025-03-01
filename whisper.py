@@ -15,7 +15,7 @@ import sys
 
 # Configuration parameters
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
-base_dir = r".\tmp"
+base_dir = r"U:\voothi\20250228230803-whisper\tmp"
 os.makedirs(base_dir, exist_ok=True)  # Create a directory if it does not exist
 
 # Global variables for managing state and paths
@@ -141,22 +141,25 @@ def restart():
     sys.exit(0)  # Завершаем текущий процесс
 
 def main():
-    global copy_to_clipboard, use_timestamp, model_selected  # Add model_selected to global variables
+    global copy_to_clipboard, use_timestamp, model_selected, tray  # Add tray to global variables
     parser = argparse.ArgumentParser(description="Audio recorder and transcriber with Whisper.")
     parser.add_argument("--clipboard", action="store_true", help="Copy transcribed text to clipboard.")
     parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
     parser.add_argument("--model", choices=["base", "medium"], default="base",  # Default model is "base"
                         help="Select Whisper model version (base or medium).")
+    parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")  # Add tray argument
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
     use_timestamp = args.timestamp
     model_selected = args.model  # Update model_selected with the parsed value
+    tray = args.tray  # Update tray with the parsed value
 
     print("Available audio devices:")
     print(sd.query_devices())
 
-    tray_thread = threading.Thread(target=create_icon)
-    tray_thread.start()
+    if tray:  # Check if tray should be created
+        tray_thread = threading.Thread(target=create_icon)
+        tray_thread.start()
 
     with keyboard.GlobalHotKeys({'<ctrl>+<alt>+w': on_activate}) as listener:
         print("Listening for Ctrl + Alt + W...")
