@@ -1,10 +1,10 @@
 # whisper.py
+import sounddevice as sd
+from scipy.io.wavfile import write
 from pynput import keyboard
 import subprocess
 import threading
 import os
-import sounddevice as sd  # Установите библиотеку: pip install sounddevice
-from scipy.io.wavfile import write  # Установите scipy: pip install scipy
 
 # Параметры
 whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
@@ -14,6 +14,17 @@ output_file_path = r".\output_transcript.txt"
 # Глобальные переменные для отслеживания клавиш
 current_keys = set()
 transcribing = False
+
+def record_audio(filename, duration=5, sample_rate=44100):
+    try:
+        print("Запись началась...")
+        audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
+        sd.wait()
+        write(filename, sample_rate, audio_data)
+        print("Запись сохранена.")
+    except Exception as e:
+        print(f"Ошибка записи: {e}")
+        raise  # Перебрасываем исключение для видимости в on_press
 
 def run_transcription():
     global transcribing
@@ -79,13 +90,6 @@ def on_release(key):
             return False
     except Exception as e:
         print(f"Произошла ошибка: {e}")
-
-def record_audio(filename, duration=5, sample_rate=44100):
-    print("Запись началась...")
-    audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
-    sd.wait()  # Ждем окончания записи
-    write(filename, sample_rate, audio_data)
-    print("Запись сохранена.")
 
 def main():
     print("Программа запущена. Нажмите Ctrl + Shift + T для начала транскрибирования.")
