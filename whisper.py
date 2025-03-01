@@ -26,6 +26,7 @@ recording_thread = None
 copy_to_clipboard = False
 use_timestamp = False
 model_selected = "base"  # Default value
+language_selected = "ru"  # Default language
 timestamp_str = ""
 audio_file_path = ""
 output_srt_path = ""
@@ -58,7 +59,7 @@ def record_audio(sample_rate=44100):
         is_recording = False
 
 def run_transcription():
-    global transcribing, output_srt_path, output_txt_path, model_selected  # Ensure model_selected is global
+    global transcribing, output_srt_path, output_txt_path, model_selected, language_selected  # Ensure model_selected and language_selected are global
     if transcribing:
         print("Transcription is already running.")
         return
@@ -75,6 +76,7 @@ def run_transcription():
             "--output_format", "srt",
             "--threads", "4",
             "--sentence",
+            "--language", language_selected  # Use the updated language_selected value
         ]
         subprocess.run(srt_command, check=True, capture_output=True, text=True)
         print("SRT transcription completed.")
@@ -141,17 +143,20 @@ def restart():
     sys.exit(0)  # Завершаем текущий процесс
 
 def main():
-    global copy_to_clipboard, use_timestamp, model_selected, tray  # Add tray to global variables
+    global copy_to_clipboard, use_timestamp, model_selected, language_selected, tray  # Add tray to global variables
     parser = argparse.ArgumentParser(description="Audio recorder and transcriber with Whisper.")
     parser.add_argument("--clipboard", action="store_true", help="Copy transcribed text to clipboard.")
     parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
     parser.add_argument("--model", choices=["base", "medium"], default="base",  # Default model is "base"
                         help="Select Whisper model version (base or medium).")
+    parser.add_argument("--language", choices=["en", "de", "ru", "uk"], default="ru",
+                        help="Select language for transcription.")
     parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")  # Add tray argument
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
     use_timestamp = args.timestamp
     model_selected = args.model  # Update model_selected with the parsed value
+    language_selected = args.language  # Update language_selected with the parsed value
     tray = args.tray  # Update tray with the parsed value
 
     print("Available audio devices:")
