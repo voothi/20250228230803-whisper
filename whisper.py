@@ -35,14 +35,14 @@ def run_transcription():
     print("Начало транскрибирования...")
 
     try:
-        # model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models\faster-whisper-medium"  # Замените на имя известной модели, как `base`, `small`, и т.д. 
+        model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"  # Замените на имя известной модели, как `base`, `small`, и т.д. 
 
         # Выполняем команду whisper-faster
         command = [
             whisper_faster_path,
             audio_file_path,
             "--model", "medium",  # Укажите модель
-            "--model_dir", r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models",  # Укажите директорию модели
+            "--model_dir", model_path,  # Укажите директорию модели
             "--output_dir", os.path.dirname(output_file_path),  # Укажите выходную директорию
             "--output_format", "txt",  # Укажите формат
         ]
