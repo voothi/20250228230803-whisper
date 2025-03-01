@@ -18,7 +18,7 @@ is_recording = False
 audio_data = []  # Global list for audio data storage
 recording_thread = None
 
-def record_audio(filename, sample_rate=44100):
+def record_audio(sample_rate=44100):
     """ Record audio from the microphone until stopped by the user. """
     global is_recording, audio_data
     
@@ -36,8 +36,12 @@ def record_audio(filename, sample_rate=44100):
         # If recording has stopped, finalize audio capture
         if audio_data:
             audio_data = np.concatenate(audio_data, axis=0)
-            write(filename, sample_rate, audio_data)  # Write the full audio to a file
+            write(audio_file_path, sample_rate, audio_data)  # Write the full audio to a file
             print("Recording saved.")
+
+            # Start transcription after saving the audio
+            run_transcription()
+
         else:
             print("No audio data recorded.")
 
@@ -47,7 +51,7 @@ def record_audio(filename, sample_rate=44100):
 def run_transcription():
     global transcribing
     if transcribing:
-        print("Transcribing is already running.")
+        print("Transcription is already running.")
         return
 
     transcribing = True
@@ -77,7 +81,6 @@ def run_transcription():
                 if '-->' not in line and line.strip() != "" and not line.strip().isdigit():
                     spoken_lines.append(line.strip())
 
-        # Write collected lines to the TXT file
         with open(output_txt_path, 'w', encoding='utf-8') as txt_file:
             txt_file.write('\n'.join(spoken_lines))
 
@@ -96,8 +99,9 @@ def on_activate():
 
     if not is_recording:
         # Start recording if not currently recording
-        recording_thread = threading.Thread(target=record_audio, args=(audio_file_path,))
-        recording_thread.start()
+        if recording_thread is None or not recording_thread.is_alive():
+            recording_thread = threading.Thread(target=record_audio)
+            recording_thread.start()
     else:
         # Stop recording if currently recording
         is_recording = False
