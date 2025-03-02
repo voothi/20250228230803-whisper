@@ -44,7 +44,7 @@ def update_icon_color():
 
 def record_audio(sample_rate=44100):
     global is_recording, audio_data, audio_file_path
-    print("\nRecording started... Press Ctrl + Alt + W again to stop.")
+    print("\nRecording started... Press Ctrl + Alt + E again to stop.")
     is_recording = True
     update_icon_color()  # Change icon to red
     audio_data.clear()
@@ -222,8 +222,8 @@ def main():
         tray_thread = threading.Thread(target=create_icon)
         tray_thread.start()
 
-    with keyboard.GlobalHotKeys({'<ctrl>+<alt>+w': on_activate}) as listener:
-        print("\nListening for Ctrl + Alt + W...")
+    with keyboard.GlobalHotKeys({'<ctrl>+<alt>+e': on_activate}) as listener:
+        print("\nListening for Ctrl + Alt + E...")
         listener.join()
 
 if __name__ == "__main__":
