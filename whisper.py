@@ -168,7 +168,7 @@ def create_icon():
                 pystray.MenuItem('Russian', lambda: restart_with_language('ru')),
                 pystray.MenuItem('Ukrainian', lambda: restart_with_language('uk')),
             )),
-            pystray.MenuItem('Exit', lambda: icon.stop())
+            pystray.MenuItem('Exit', lambda: exit_app())
         )
     )
     icon.run()
@@ -187,6 +187,16 @@ def restart():
     # Using subprocess to call the wrapper script
     subprocess.Popen([python, "restart.py", script_to_run] + sys.argv[1:])
     os._exit(0)  # Terminate the current process
+
+def exit_app():
+    """Function to handle cleanup and exit the application."""
+    global recording_thread, is_recording
+    if is_recording:
+        is_recording = False
+        recording_thread.join()  # Wait for the recording thread to finish
+    if icon:
+        icon.stop()  # Stop the tray icon
+    os._exit(0)  # Exit the application immediately after cleanup
 
 def main():
     global copy_to_clipboard, use_timestamp, model_selected, language_selected, tray
