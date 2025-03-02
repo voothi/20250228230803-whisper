@@ -33,10 +33,20 @@ output_srt_path = ""
 output_txt_path = ""
 icon = None
 
+def update_icon_color():
+    global icon, is_recording
+    if icon is None:
+        return
+    color = 'red' if is_recording else 'blue'
+    img = Image.new('RGB', (16, 16), color)
+    # Use `icon.icon` to set the new image, pystray updates it automatically
+    icon.icon = img  # No explicit `update()` method exists
+
 def record_audio(sample_rate=44100):
     global is_recording, audio_data, audio_file_path
     print("\nRecording started... Press Ctrl + Alt + W again to stop.")
     is_recording = True
+    update_icon_color()  # Change icon to red
     audio_data.clear()
 
     def callback(indata, frames, time, status):
@@ -57,6 +67,7 @@ def record_audio(sample_rate=44100):
         print(f"An error occurred during recording: {e}")
     finally:
         is_recording = False
+        update_icon_color()  # Revert to blue
 
 def run_transcription():
     global transcribing, output_srt_path, output_txt_path, model_selected, language_selected
@@ -122,6 +133,7 @@ def on_activate():
         recording_thread.start()
     else:
         is_recording = False
+        update_icon_color()  # Immediate visual feedback on stop
         print("Stopping recording...")
 
 def restart_with_language(language):
