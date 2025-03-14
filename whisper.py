@@ -32,6 +32,7 @@ audio_file_path = ""
 output_srt_path = ""
 output_txt_path = ""
 icon = None
+last_click_time = 0
 
 def update_icon_color():
     global icon, is_recording, transcribing
@@ -122,7 +123,7 @@ def generate_timestamp():
 
 def on_activate():
     global recording_thread, is_recording, timestamp_str, audio_file_path, output_srt_path, output_txt_path
-    if not is_recording:        
+    if not is_recording:
         if use_timestamp:
             timestamp_str = generate_timestamp()
         else:
@@ -161,7 +162,7 @@ def create_icon():
         image,
         "Audio Recorder and Transcriber",
         menu=pystray.Menu(
-            pystray.MenuItem('Record', on_activate),
+            pystray.MenuItem('Record', on_activate, default=True),
             pystray.MenuItem('Restart', restart),
             pystray.MenuItem('Set Language', pystray.Menu(
                 pystray.MenuItem('English', lambda: restart_with_language('en')),
