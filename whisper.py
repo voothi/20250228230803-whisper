@@ -34,12 +34,11 @@ output_txt_path = ""
 icon = None
 
 def update_icon_color():
-    global icon, is_recording
+    global icon, is_recording, transcribing
     if icon is None:
         return
-    color = 'red' if is_recording else 'blue'
+    color = 'yellow' if transcribing else ('red' if is_recording else 'blue')
     img = Image.new('RGB', (16, 16), color)
-    # Use `icon.icon` to set the new image, pystray updates it automatically
     icon.icon = img  # No explicit `update()` method exists
 
 def record_audio(sample_rate=44100):
@@ -75,6 +74,7 @@ def run_transcription():
         print("Transcription is already running.")
         return
     transcribing = True
+    update_icon_color()  # Change icon to yellow
     print("Starting transcription...")
     
     # Command to run the transcription
@@ -115,6 +115,7 @@ def run_transcription():
         print(f"Error: {e}")
     finally:
         transcribing = False
+        update_icon_color()  # Revert to blue
 
 def generate_timestamp():
     return datetime.now().strftime("%Y%m%d%H%M%S")
