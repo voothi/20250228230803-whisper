@@ -38,6 +38,7 @@ last_click_time = 0
 # Queue to store audio files for transcription
 transcription_queue = Queue()
 icon_update_queue = Queue()
+transcription_threads = []  # List to store all transcription threads
 
 
 def update_icon_color(color):
@@ -47,7 +48,7 @@ def update_icon_color(color):
 
 def update_icon_based_on_queue():
     if is_recording:
-        update_icon_color("red")
+        update_icon_color("red")  # Change icon to red
     else:
         if transcription_queue.empty():
             update_icon_color("blue")  # Queue is empty, so set to blue
@@ -98,75 +99,82 @@ def record_audio(sample_rate=44100):
         update_icon_based_on_queue()  # Ensure icon color is updated properly when recording stops
 
 
-def run_transcription():
+def run_transcription(audio_file_path):
     global transcribing, model_selected, language_selected
-    while True:  # Infinite loop to process queue continuously
-        audio_file_path = transcription_queue.get()  # Blocks until an item is available
+    try:
+        output_srt_path = os.path.splitext(audio_file_path)[0] + ".srt"
+        output_txt_path = os.path.splitext(audio_file_path)[0] + ".txt"
+        transcribing = True
+        if not is_recording:
+            update_icon_color("yellow")  # Change icon to yellow
+        print(f"Starting transcription for {audio_file_path}...")
+
+        spoken_lines = []  # Initialize spoken_lines here
+
+        # Command to run the transcription
         try:
-            output_srt_path = os.path.splitext(audio_file_path)[0] + ".srt"
-            output_txt_path = os.path.splitext(audio_file_path)[0] + ".txt"
-            transcribing = True
-            if not is_recording:
-                update_icon_color("yellow")  # Change icon to yellow
-            print(f"Starting transcription for {audio_file_path}...")
+            model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"
+            srt_command = [
+                whisper_faster_path,
+                audio_file_path,
+                "--model",
+                model_selected,
+                "--model_dir",
+                model_path,
+                "--output_dir",
+                os.path.dirname(output_srt_path),
+                "--output_format",
+                "srt",
+                "--threads",
+                "4",
+                "--sentence",
+            ]
+            if language_selected is not None:
+                srt_command.extend(["--language", language_selected])
 
-            spoken_lines = []  # Initialize spoken_lines here
+            print(
+                f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n"
+            )
+            subprocess.run(srt_command, check=True, capture_output=True, text=True)
+            print("SRT transcription completed.")
 
-            # Command to run the transcription
-            try:
-                model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"
-                srt_command = [
-                    whisper_faster_path,
-                    audio_file_path,
-                    "--model",
-                    model_selected,
-                    "--model_dir",
-                    model_path,
-                    "--output_dir",
-                    os.path.dirname(output_srt_path),
-                    "--output_format",
-                    "srt",
-                    "--threads",
-                    "4",
-                    "--sentence",
-                ]
-                if language_selected is not None:
-                    srt_command.extend(["--language", language_selected])
+            with open(output_srt_path, "r", encoding="utf-8") as srt_file:
+                for line in srt_file:
+                    if (
+                        "-->" not in line
+                        and line.strip() != ""
+                        and not line.strip().isdigit()
+                    ):
+                        spoken_lines.append(line.strip())
+            with open(output_txt_path, "w", encoding="utf-8") as txt_file:
+                txt_file.write("\n".join(spoken_lines))
+            print("TXT transcription created from SRT.")
 
-                print(
-                    f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n"
-                )
-                subprocess.run(srt_command, check=True, capture_output=True, text=True)
-                print("SRT transcription completed.")
-
-                with open(output_srt_path, "r", encoding="utf-8") as srt_file:
-                    for line in srt_file:
-                        if (
-                            "-->" not in line
-                            and line.strip() != ""
-                            and not line.strip().isdigit()
-                        ):
-                            spoken_lines.append(line.strip())
-                with open(output_txt_path, "w", encoding="utf-8") as txt_file:
-                    txt_file.write("\n".join(spoken_lines))
-                print("TXT transcription created from SRT.")
-
-                if copy_to_clipboard:
-                    pyperclip.copy("\n".join(spoken_lines))
-                    print("Transcription copied to clipboard.")
-            except subprocess.CalledProcessError as e:
-                print(f"Transcription error: {e.stderr}")
-            except Exception as e:
-                print(f"Error: {e}")
-            finally:
-                transcribing = False
-                transcription_queue.task_done()
-                update_icon_based_on_queue()  # Update icon based on queue state
+            if copy_to_clipboard:
+                pyperclip.copy("\n".join(spoken_lines))
+                print("Transcription copied to clipboard.")
+        except subprocess.CalledProcessError as e:
+            print(f"Transcription error: {e.stderr}")
         except Exception as e:
-            print(f"Error processing {audio_file_path}: {e}")
+            print(f"Error: {e}")
+        finally:
             transcribing = False
-            transcription_queue.task_done()
             update_icon_based_on_queue()  # Update icon based on queue state
+    except Exception as e:
+        print(f"Error processing {audio_file_path}: {e}")
+        transcribing = False
+        update_icon_based_on_queue()  # Update icon based on queue state
+
+
+def process_transcription_queue():
+    while True:
+        audio_file_path = transcription_queue.get()  # Blocks until an item is available
+        thread = threading.Thread(
+            target=run_transcription, args=(audio_file_path,), daemon=True
+        )
+        transcription_threads.append(thread)
+        thread.start()
+        transcription_queue.task_done()
 
 
 def generate_timestamp():
@@ -254,17 +262,22 @@ def restart():
 
     # Using subprocess to call the wrapper script
     subprocess.Popen([python, "restart.py", script_to_run] + sys.argv[1:])
-    os._exit(0)  # Terminate the current process
+    os._exit(0)  # Exit the application immediately after cleanup
 
 
 def exit_app():
     """Function to handle cleanup and exit the application."""
-    global recording_thread, is_recording, transcription_queue, icon_update_queue
+    global recording_thread, is_recording, transcription_queue, icon_update_queue, transcription_threads
     if is_recording:
         is_recording = False
         recording_thread.join()  # Wait for the recording thread to finish
     transcription_queue.join()  # Ensure all queued tasks are processed before exiting
     icon_update_queue.join()  # Ensure all queued icon updates are processed before exiting
+
+    for thread in transcription_threads:
+        if thread.is_alive():
+            thread.join()  # Wait for all transcription threads to finish
+
     if icon:
         icon.stop()  # Stop the tray icon
     os._exit(0)  # Exit the application immediately after cleanup
@@ -304,9 +317,11 @@ def main():
     print("Available audio devices:")
     print(sd.query_devices())
 
-    # Start the transcription thread
-    transcription_thread = threading.Thread(target=run_transcription, daemon=True)
-    transcription_thread.start()
+    # Start the transcription queue processing thread
+    transcription_queue_thread = threading.Thread(
+        target=process_transcription_queue, daemon=True
+    )
+    transcription_queue_thread.start()
 
     # Start the icon update thread
     icon_update_thread = threading.Thread(target=update_icon, daemon=True)
