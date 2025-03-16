@@ -186,7 +186,7 @@ def generate_timestamp():
 
 
 def on_activate():
-    global recording_thread, timestamp_str, audio_file_path, output_srt_path, output_txt_path
+    global is_recording, recording_thread, timestamp_str, audio_file_path, output_srt_path, output_txt_path
     with recording_lock:
         if not is_recording:
             if use_timestamp:
