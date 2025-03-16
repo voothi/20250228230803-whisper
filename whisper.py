@@ -39,48 +39,55 @@ last_click_time = 0
 transcription_queue = Queue()
 icon_update_queue = Queue()
 
+
 def update_icon_color(color):
     # if not is_recording:  # Prevent changing icon color while recording
-        icon_update_queue.put(color)
+    icon_update_queue.put(color)
+
 
 def update_icon_based_on_queue():
-    if not is_recording:  # Prevent changing icon color while recording
-        if transcription_queue.empty():
-            update_icon_color('blue')  # Queue is empty, so set to blue
-        else:
-            update_icon_color('yellow')  # Queue has items, so set to yellow
+    if is_recording:
+        update_icon_color("red")
     else:
-        update_icon_color('red')
-        
+        if transcription_queue.empty():
+            update_icon_color("blue")  # Queue is empty, so set to blue
+        else:
+            update_icon_color("yellow")  # Queue has items, so set to yellow
+
 
 def update_icon():
     global icon
     while True:
         color = icon_update_queue.get()
         if icon is not None:
-            img = Image.new('RGB', (16, 16), color)
+            img = Image.new("RGB", (16, 16), color)
             icon.icon = img
         icon_update_queue.task_done()
+
 
 def record_audio(sample_rate=44100):
     global is_recording, audio_data, audio_file_path
     print("\nRecording started... Press Ctrl + Alt + E again to stop.")
     is_recording = True
-    update_icon_color('red')  # Change icon to red
+    update_icon_color("red")  # Change icon to red
     audio_data.clear()
 
     def callback(indata, frames, time, status):
         audio_data.append(indata.copy())
 
     try:
-        with sd.InputStream(samplerate=sample_rate, channels=1, dtype='int16', callback=callback):
+        with sd.InputStream(
+            samplerate=sample_rate, channels=1, dtype="int16", callback=callback
+        ):
             while is_recording:
                 sd.sleep(100)
         if audio_data:
             full_audio = np.concatenate(audio_data, axis=0)
             write(audio_file_path, sample_rate, full_audio)
             print(f"Recording saved to {audio_file_path}")
-            transcription_queue.put(audio_file_path)  # Add the file to the queue for transcription
+            transcription_queue.put(
+                audio_file_path
+            )  # Add the file to the queue for transcription
             update_icon_based_on_queue()  # Update icon based on queue state
         else:
             print("No audio data recorded.")
@@ -90,15 +97,17 @@ def record_audio(sample_rate=44100):
         is_recording = False
         update_icon_based_on_queue()  # Ensure icon color is updated properly when recording stops
 
+
 def run_transcription():
     global transcribing, model_selected, language_selected
     while True:  # Infinite loop to process queue continuously
         audio_file_path = transcription_queue.get()  # Blocks until an item is available
         try:
-            output_srt_path = os.path.splitext(audio_file_path)[0] + '.srt'
-            output_txt_path = os.path.splitext(audio_file_path)[0] + '.txt'
+            output_srt_path = os.path.splitext(audio_file_path)[0] + ".srt"
+            output_txt_path = os.path.splitext(audio_file_path)[0] + ".txt"
             transcribing = True
-            update_icon_color('yellow')  # Change icon to yellow
+            if not is_recording:
+                update_icon_color("yellow")  # Change icon to yellow
             print(f"Starting transcription for {audio_file_path}...")
 
             spoken_lines = []  # Initialize spoken_lines here
@@ -109,30 +118,41 @@ def run_transcription():
                 srt_command = [
                     whisper_faster_path,
                     audio_file_path,
-                    "--model", model_selected,
-                    "--model_dir", model_path,
-                    "--output_dir", os.path.dirname(output_srt_path),
-                    "--output_format", "srt",
-                    "--threads", "4",
-                    "--sentence"
+                    "--model",
+                    model_selected,
+                    "--model_dir",
+                    model_path,
+                    "--output_dir",
+                    os.path.dirname(output_srt_path),
+                    "--output_format",
+                    "srt",
+                    "--threads",
+                    "4",
+                    "--sentence",
                 ]
                 if language_selected is not None:
                     srt_command.extend(["--language", language_selected])
 
-                print(f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n")
+                print(
+                    f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n"
+                )
                 subprocess.run(srt_command, check=True, capture_output=True, text=True)
                 print("SRT transcription completed.")
 
-                with open(output_srt_path, 'r', encoding='utf-8') as srt_file:
+                with open(output_srt_path, "r", encoding="utf-8") as srt_file:
                     for line in srt_file:
-                        if '-->' not in line and line.strip() != "" and not line.strip().isdigit():
+                        if (
+                            "-->" not in line
+                            and line.strip() != ""
+                            and not line.strip().isdigit()
+                        ):
                             spoken_lines.append(line.strip())
-                with open(output_txt_path, 'w', encoding='utf-8') as txt_file:
-                    txt_file.write('\n'.join(spoken_lines))
+                with open(output_txt_path, "w", encoding="utf-8") as txt_file:
+                    txt_file.write("\n".join(spoken_lines))
                 print("TXT transcription created from SRT.")
 
                 if copy_to_clipboard:
-                    pyperclip.copy('\n'.join(spoken_lines))
+                    pyperclip.copy("\n".join(spoken_lines))
                     print("Transcription copied to clipboard.")
             except subprocess.CalledProcessError as e:
                 print(f"Transcription error: {e.stderr}")
@@ -148,8 +168,10 @@ def run_transcription():
             transcription_queue.task_done()
             update_icon_based_on_queue()  # Update icon based on queue state
 
+
 def generate_timestamp():
     return datetime.now().strftime("%Y%m%d%H%M%S")
+
 
 def on_activate():
     global recording_thread, is_recording, timestamp_str, audio_file_path, output_srt_path, output_txt_path
@@ -158,9 +180,15 @@ def on_activate():
             timestamp_str = generate_timestamp()
         else:
             timestamp_str = ""
-        audio_file_path = os.path.join(base_dir, f"{timestamp_str}-audio.wav" if timestamp_str else "audio.wav")
-        output_srt_path = os.path.join(base_dir, f"{timestamp_str}-audio.srt" if timestamp_str else "audio.srt")
-        output_txt_path = os.path.join(base_dir, f"{timestamp_str}-audio.txt" if timestamp_str else "audio.txt")
+        audio_file_path = os.path.join(
+            base_dir, f"{timestamp_str}-audio.wav" if timestamp_str else "audio.wav"
+        )
+        output_srt_path = os.path.join(
+            base_dir, f"{timestamp_str}-audio.srt" if timestamp_str else "audio.srt"
+        )
+        output_txt_path = os.path.join(
+            base_dir, f"{timestamp_str}-audio.txt" if timestamp_str else "audio.txt"
+        )
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
     else:
@@ -168,42 +196,50 @@ def on_activate():
         # Let update_icon_based_on_queue handle the icon color
         print("Stopping recording...")
 
+
 def restart_with_language(language):
     global icon
     if is_recording or transcribing:  # Check if recording or transcribing is active
-        print("Please wait until the current recording or transcription is finished before restarting.")
+        print(
+            "Please wait until the current recording or transcription is finished before restarting."
+        )
         return
     icon.stop()  # Stop the system tray icon
     python = sys.executable
     script_to_run = __file__
     args = sys.argv[1:] + [f"--language={language}"]
-    
+
     print(f"\nRestarting with language: {language}\n")
-    
+
     # Using subprocess to call the wrapper script
     subprocess.Popen([python, "restart.py", script_to_run] + args)
     os._exit(0)  # Terminate the current process
 
+
 def create_icon():
     global icon
-    image = Image.new('RGB', (16, 16), color='blue')
+    image = Image.new("RGB", (16, 16), color="blue")
     icon = pystray.Icon(
         "Whisper",
         image,
         "Audio Recorder and Transcriber",
         menu=pystray.Menu(
-            pystray.MenuItem('Record', on_activate, default=True),
-            pystray.MenuItem('Restart', restart),
-            pystray.MenuItem('Set Language', pystray.Menu(
-                pystray.MenuItem('English', lambda: restart_with_language('en')),
-                pystray.MenuItem('Deutsch', lambda: restart_with_language('de')),
-                pystray.MenuItem('Russian', lambda: restart_with_language('ru')),
-                pystray.MenuItem('Ukrainian', lambda: restart_with_language('uk')),
-            )),
-            pystray.MenuItem('Exit', lambda: exit_app())
-        )
+            pystray.MenuItem("Record", on_activate, default=True),
+            pystray.MenuItem("Restart", restart),
+            pystray.MenuItem(
+                "Set Language",
+                pystray.Menu(
+                    pystray.MenuItem("English", lambda: restart_with_language("en")),
+                    pystray.MenuItem("Deutsch", lambda: restart_with_language("de")),
+                    pystray.MenuItem("Russian", lambda: restart_with_language("ru")),
+                    pystray.MenuItem("Ukrainian", lambda: restart_with_language("uk")),
+                ),
+            ),
+            pystray.MenuItem("Exit", lambda: exit_app()),
+        ),
     )
     icon.run()
+
 
 def restart():
     global icon
@@ -213,12 +249,13 @@ def restart():
     icon.stop()  # Stop the system tray icon
     python = sys.executable
     script_to_run = __file__
-    
+
     print(f"\nRestarting...\n")
-    
+
     # Using subprocess to call the wrapper script
     subprocess.Popen([python, "restart.py", script_to_run] + sys.argv[1:])
     os._exit(0)  # Terminate the current process
+
 
 def exit_app():
     """Function to handle cleanup and exit the application."""
@@ -232,15 +269,30 @@ def exit_app():
         icon.stop()  # Stop the tray icon
     os._exit(0)  # Exit the application immediately after cleanup
 
+
 def main():
     global copy_to_clipboard, use_timestamp, model_selected, language_selected, tray
-    parser = argparse.ArgumentParser(description="Audio recorder and transcriber with Whisper.")
-    parser.add_argument("--clipboard", action="store_true", help="Copy transcribed text to clipboard.")
-    parser.add_argument("--timestamp", action="store_true", help="Use timestamp in file names.")
-    parser.add_argument("--model", choices=["base", "medium"], default="base",
-                        help="Select Whisper model version (base or medium).")
-    parser.add_argument("--language", choices=["en", "de", "ru", "uk"], default=None,
-                        help="Select language for transcription.")
+    parser = argparse.ArgumentParser(
+        description="Audio recorder and transcriber with Whisper."
+    )
+    parser.add_argument(
+        "--clipboard", action="store_true", help="Copy transcribed text to clipboard."
+    )
+    parser.add_argument(
+        "--timestamp", action="store_true", help="Use timestamp in file names."
+    )
+    parser.add_argument(
+        "--model",
+        choices=["base", "medium"],
+        default="base",
+        help="Select Whisper model version (base or medium).",
+    )
+    parser.add_argument(
+        "--language",
+        choices=["en", "de", "ru", "uk"],
+        default=None,
+        help="Select language for transcription.",
+    )
     parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
@@ -264,9 +316,10 @@ def main():
         tray_thread = threading.Thread(target=create_icon)
         tray_thread.start()
 
-    with keyboard.GlobalHotKeys({'<ctrl>+<alt>+e': on_activate}) as listener:
+    with keyboard.GlobalHotKeys({"<ctrl>+<alt>+e": on_activate}) as listener:
         print("\nListening for Ctrl + Alt + E...")
         listener.join()
+
 
 if __name__ == "__main__":
     main()
