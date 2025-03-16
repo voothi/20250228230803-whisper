@@ -49,6 +49,9 @@ def update_icon_based_on_queue():
             update_icon_color('blue')  # Queue is empty, so set to blue
         else:
             update_icon_color('yellow')  # Queue has items, so set to yellow
+    else:
+        update_icon_color('red')
+        
 
 def update_icon():
     global icon
