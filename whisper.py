@@ -40,13 +40,15 @@ transcription_queue = Queue()
 icon_update_queue = Queue()
 
 def update_icon_color(color):
-    icon_update_queue.put(color)
+    if not is_recording:  # Prevent changing icon color while recording
+        icon_update_queue.put(color)
 
 def update_icon_based_on_queue():
-    if transcription_queue.empty():
-        update_icon_color('blue')  # Queue is empty, so set to blue
-    else:
-        update_icon_color('yellow')  # Queue has items, so set to yellow
+    if not is_recording:  # Prevent changing icon color while recording
+        if transcription_queue.empty():
+            update_icon_color('blue')  # Queue is empty, so set to blue
+        else:
+            update_icon_color('yellow')  # Queue has items, so set to yellow
 
 def update_icon():
     global icon
@@ -83,7 +85,7 @@ def record_audio(sample_rate=44100):
         print(f"An error occurred during recording: {e}")
     finally:
         is_recording = False
-        # Let update_icon_based_on_queue handle the icon color
+        update_icon_based_on_queue()  # Ensure icon color is updated properly when recording stops
 
 def run_transcription():
     global transcribing, model_selected, language_selected
