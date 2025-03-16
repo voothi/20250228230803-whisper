@@ -50,17 +50,6 @@ def update_icon_color(color):
     icon_update_queue.put(color)
 
 
-def update_icon_based_on_queue():
-    with queue_lock:
-        if is_recording:
-            update_icon_color("red")  # Change icon to red
-        else:
-            if transcription_queue.empty():
-                update_icon_color("blue")  # Queue is empty, so set to blue
-            else:
-                update_icon_color("yellow")  # Queue has items, so set to yellow
-
-
 def update_icon():
     global icon
     while True:
@@ -77,7 +66,6 @@ def record_audio(sample_rate=44100):
     with recording_lock:
         is_recording = True
     update_icon_color("red")  # Change icon to red
-    # update_icon_based_on_queue()
     audio_data.clear()
 
     def callback(indata, frames, time, status):
@@ -98,7 +86,6 @@ def record_audio(sample_rate=44100):
             print(f"Recording saved to {audio_file_path}")
             with queue_lock:
                 transcription_queue.put(audio_file_path)
-            update_icon_based_on_queue()
         else:
             print("No audio data recorded.")
     except Exception as e:
@@ -106,7 +93,7 @@ def record_audio(sample_rate=44100):
     finally:
         with recording_lock:
             is_recording = False
-        update_icon_based_on_queue()
+        update_icon_color("blue")  # Change icon back to blue
 
 
 def run_transcription(audio_file_path):
@@ -115,9 +102,6 @@ def run_transcription(audio_file_path):
     output_txt_path = os.path.splitext(audio_file_path)[0] + ".txt"
     with transcribing_lock:
         transcribing = True
-    update_icon_based_on_queue()
-    if not is_recording:
-        update_icon_color("yellow")
     print(f"Starting transcription for {audio_file_path}...")
 
     spoken_lines = []  # Initialize spoken_lines here
@@ -169,7 +153,6 @@ def run_transcription(audio_file_path):
     finally:
         with transcribing_lock:
             transcribing = False
-        update_icon_based_on_queue()
 
 
 def process_transcription_queue():
@@ -181,7 +164,6 @@ def process_transcription_queue():
         transcription_threads.append(thread)
         thread.start()
         transcription_queue.task_done()
-        update_icon_based_on_queue()
 
 
 def generate_timestamp():
@@ -210,7 +192,7 @@ def on_activate():
         else:
             is_recording = False
             print("Stopping recording...")
-            update_icon_based_on_queue()
+            update_icon_color("blue")  # Change icon back to blue
 
 
 def restart_with_language(language):
