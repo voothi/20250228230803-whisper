@@ -40,7 +40,7 @@ transcription_queue = Queue()
 icon_update_queue = Queue()
 
 def update_icon_color(color):
-    if not is_recording:  # Prevent changing icon color while recording
+    # if not is_recording:  # Prevent changing icon color while recording
         icon_update_queue.put(color)
 
 def update_icon_based_on_queue():
