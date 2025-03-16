@@ -42,6 +42,12 @@ icon_update_queue = Queue()
 def update_icon_color(color):
     icon_update_queue.put(color)
 
+def update_icon_based_on_queue():
+    if transcription_queue.empty():
+        update_icon_color('blue')  # Queue is empty, so set to blue
+    else:
+        update_icon_color('yellow')  # Queue has items, so set to yellow
+
 def update_icon():
     global icon
     while True:
@@ -70,13 +76,14 @@ def record_audio(sample_rate=44100):
             write(audio_file_path, sample_rate, full_audio)
             print(f"Recording saved to {audio_file_path}")
             transcription_queue.put(audio_file_path)  # Add the file to the queue for transcription
+            update_icon_based_on_queue()  # Update icon based on queue state
         else:
             print("No audio data recorded.")
     except Exception as e:
         print(f"An error occurred during recording: {e}")
     finally:
         is_recording = False
-        update_icon_color('blue')  # Revert to blue
+        # Let update_icon_based_on_queue handle the icon color
 
 def run_transcription():
     global transcribing, model_selected, language_selected
@@ -129,12 +136,12 @@ def run_transcription():
             finally:
                 transcribing = False
                 transcription_queue.task_done()
-                update_icon_color('blue')  # Revert to blue
+                update_icon_based_on_queue()  # Update icon based on queue state
         except Exception as e:
             print(f"Error processing {audio_file_path}: {e}")
             transcribing = False
             transcription_queue.task_done()
-            update_icon_color('blue')  # Revert to blue
+            update_icon_based_on_queue()  # Update icon based on queue state
 
 def generate_timestamp():
     return datetime.now().strftime("%Y%m%d%H%M%S")
@@ -153,7 +160,7 @@ def on_activate():
         recording_thread.start()
     else:
         is_recording = False
-        update_icon_color('blue')  # Immediate visual feedback on stop
+        # Let update_icon_based_on_queue handle the icon color
         print("Stopping recording...")
 
 def restart_with_language(language):
