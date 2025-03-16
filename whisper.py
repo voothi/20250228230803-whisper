@@ -115,8 +115,9 @@ def run_transcription(audio_file_path):
     output_txt_path = os.path.splitext(audio_file_path)[0] + ".txt"
     with transcribing_lock:
         transcribing = True
-    # update_icon_based_on_queue()
-    update_icon_color("yellow")
+    update_icon_based_on_queue()
+    if not is_recording:
+        update_icon_color("yellow")
     print(f"Starting transcription for {audio_file_path}...")
 
     spoken_lines = []  # Initialize spoken_lines here
@@ -180,6 +181,7 @@ def process_transcription_queue():
         transcription_threads.append(thread)
         thread.start()
         transcription_queue.task_done()
+        update_icon_based_on_queue()
 
 
 def generate_timestamp():
