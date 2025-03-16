@@ -46,20 +46,19 @@ transcribing_lock = threading.Lock()
 queue_lock = threading.Lock()
 
 
-def update_icon_color():
-    if not is_recording:
-        if transcription_queue.empty():
-            color = "blue"
-        else:
-            color = "yellow"
-    else:
-        color = "red"
+def update_icon_color(color):
     icon_update_queue.put(color)
 
 
 def update_icon_based_on_queue():
     with queue_lock:
-        update_icon_color()
+        if is_recording:
+            update_icon_color("red")  # Change icon to red
+        else:
+            if transcription_queue.empty():
+                update_icon_color("blue")  # Queue is empty, so set to blue
+            else:
+                update_icon_color("yellow")  # Queue has items, so set to yellow
 
 
 def update_icon():
@@ -77,7 +76,8 @@ def record_audio(sample_rate=44100):
     print("\nRecording started... Press Ctrl + Alt + E again to stop.")
     with recording_lock:
         is_recording = True
-    update_icon_based_on_queue()
+    update_icon_color("red")  # Change icon to red
+    # update_icon_based_on_queue()
     audio_data.clear()
 
     def callback(indata, frames, time, status):
@@ -115,7 +115,8 @@ def run_transcription(audio_file_path):
     output_txt_path = os.path.splitext(audio_file_path)[0] + ".txt"
     with transcribing_lock:
         transcribing = True
-    update_icon_based_on_queue()
+    # update_icon_based_on_queue()
+    update_icon_color("yellow")
     print(f"Starting transcription for {audio_file_path}...")
 
     spoken_lines = []  # Initialize spoken_lines here
