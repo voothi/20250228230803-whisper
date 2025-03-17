@@ -39,16 +39,21 @@ last_click_time = 0
 # Queue to store audio files for transcription
 transcription_queue = Queue()
 icon_update_queue = Queue()
-transcription_threads = []  # List to store all transcription threads
-
-# Locks for thread-safe variable access
-recording_lock = threading.Lock()
-transcribing_lock = threading.Lock()
-queue_lock = threading.Lock()
 
 
 def update_icon_color(color):
+    # if not is_recording:  # Prevent changing icon color while recording
     icon_update_queue.put(color)
+
+
+def update_icon_based_on_queue():
+    if is_recording:
+        update_icon_color("red")
+    else:
+        if transcription_queue.empty():
+            update_icon_color("blue")  # Queue is empty, so set to blue
+        else:
+            update_icon_color("yellow")  # Queue has items, so set to yellow
 
 
 def update_icon():
@@ -64,8 +69,7 @@ def update_icon():
 def record_audio(sample_rate=44100):
     global is_recording, audio_data, audio_file_path
     print("\nRecording started... Press Ctrl + Alt + E again to stop.")
-    with recording_lock:
-        is_recording = True
+    is_recording = True
     update_icon_color("red")  # Change icon to red
     audio_data.clear()
 
@@ -76,25 +80,23 @@ def record_audio(sample_rate=44100):
         with sd.InputStream(
             samplerate=sample_rate, channels=1, dtype="int16", callback=callback
         ):
-            while True:
-                with recording_lock:
-                    if not is_recording:
-                        break
+            while is_recording:
                 sd.sleep(100)
         if audio_data:
             full_audio = np.concatenate(audio_data, axis=0)
             write(audio_file_path, sample_rate, full_audio)
             print(f"Recording saved to {audio_file_path}")
-            with queue_lock:
-                transcription_queue.put(audio_file_path)
+            transcription_queue.put(
+                audio_file_path
+            )  # Add the file to the queue for transcription
+            update_icon_based_on_queue()  # Update icon based on queue state
         else:
             print("No audio data recorded.")
     except Exception as e:
         print(f"An error occurred during recording: {e}")
     finally:
-        with recording_lock:
-            is_recording = False
-        update_icon_color("blue")  # Change icon back to blue
+        is_recording = False
+        update_icon_based_on_queue()  # Ensure icon color is updated properly when recording stops
 
 
 def run_transcription():
@@ -109,7 +111,7 @@ def run_transcription():
                 update_icon_color("yellow")  # Change icon to yellow
             print(f"Starting transcription for {audio_file_path}...")
 
-    spoken_lines = []  # Initialize spoken_lines here
+            spoken_lines = []  # Initialize spoken_lines here
 
             # Command to run the transcription
             try:
@@ -134,43 +136,40 @@ def run_transcription():
                 if beep_off:
                     srt_command.append("--beep_off")  # Add --beep_off if selected
 
-        print(f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n")
-        subprocess.run(srt_command, check=True, capture_output=True, text=True)
-        print("SRT transcription completed.")
+                print(
+                    f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n"
+                )
+                subprocess.run(srt_command, check=True, capture_output=True, text=True)
+                print("SRT transcription completed.")
 
-        with open(output_srt_path, "r", encoding="utf-8") as srt_file:
-            for line in srt_file:
-                if (
-                    "-->" not in line
-                    and line.strip() != ""
-                    and not line.strip().isdigit()
-                ):
-                    spoken_lines.append(line.strip())
-        with open(output_txt_path, "w", encoding="utf-8") as txt_file:
-            txt_file.write("\n".join(spoken_lines))
-        print("TXT transcription created from SRT.")
+                with open(output_srt_path, "r", encoding="utf-8") as srt_file:
+                    for line in srt_file:
+                        if (
+                            "-->" not in line
+                            and line.strip() != ""
+                            and not line.strip().isdigit()
+                        ):
+                            spoken_lines.append(line.strip())
+                with open(output_txt_path, "w", encoding="utf-8") as txt_file:
+                    txt_file.write("\n".join(spoken_lines))
+                print("TXT transcription created from SRT.")
 
-        if copy_to_clipboard:
-            pyperclip.copy("\n".join(spoken_lines))
-            print("Transcription copied to clipboard.")
-    except subprocess.CalledProcessError as e:
-        print(f"Transcription error: {e.stderr}")
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        with transcribing_lock:
+                if copy_to_clipboard:
+                    pyperclip.copy("\n".join(spoken_lines))
+                    print("Transcription copied to clipboard.")
+            except subprocess.CalledProcessError as e:
+                print(f"Transcription error: {e.stderr}")
+            except Exception as e:
+                print(f"Error: {e}")
+            finally:
+                transcribing = False
+                transcription_queue.task_done()
+                update_icon_based_on_queue()  # Update icon based on queue state
+        except Exception as e:
+            print(f"Error processing {audio_file_path}: {e}")
             transcribing = False
-
-
-def process_transcription_queue():
-    while True:
-        audio_file_path = transcription_queue.get()
-        thread = threading.Thread(
-            target=run_transcription, args=(audio_file_path,), daemon=True
-        )
-        transcription_threads.append(thread)
-        thread.start()
-        transcription_queue.task_done()
+            transcription_queue.task_done()
+            update_icon_based_on_queue()  # Update icon based on queue state
 
 
 def generate_timestamp():
@@ -178,33 +177,32 @@ def generate_timestamp():
 
 
 def on_activate():
-    global is_recording, recording_thread, timestamp_str, audio_file_path, output_srt_path, output_txt_path
-    with recording_lock:
-        if not is_recording:
-            if use_timestamp:
-                timestamp_str = generate_timestamp()
-            else:
-                timestamp_str = ""
-            audio_file_path = os.path.join(
-                base_dir, f"{timestamp_str}-audio.wav" if timestamp_str else "audio.wav"
-            )
-            output_srt_path = os.path.join(
-                base_dir, f"{timestamp_str}-audio.srt" if timestamp_str else "audio.srt"
-            )
-            output_txt_path = os.path.join(
-                base_dir, f"{timestamp_str}-audio.txt" if timestamp_str else "audio.txt"
-            )
-            recording_thread = threading.Thread(target=record_audio)
-            recording_thread.start()
+    global recording_thread, is_recording, timestamp_str, audio_file_path, output_srt_path, output_txt_path
+    if not is_recording:
+        if use_timestamp:
+            timestamp_str = generate_timestamp()
         else:
-            is_recording = False
-            print("Stopping recording...")
-            update_icon_color("blue")  # Change icon back to blue
+            timestamp_str = ""
+        audio_file_path = os.path.join(
+            base_dir, f"{timestamp_str}-audio.wav" if timestamp_str else "audio.wav"
+        )
+        output_srt_path = os.path.join(
+            base_dir, f"{timestamp_str}-audio.srt" if timestamp_str else "audio.srt"
+        )
+        output_txt_path = os.path.join(
+            base_dir, f"{timestamp_str}-audio.txt" if timestamp_str else "audio.txt"
+        )
+        recording_thread = threading.Thread(target=record_audio)
+        recording_thread.start()
+    else:
+        is_recording = False
+        # Let update_icon_based_on_queue handle the icon color
+        print("Stopping recording...")
 
 
 def restart_with_language(language):
     global icon
-    if is_recording or transcribing:
+    if is_recording or transcribing:  # Check if recording or transcribing is active
         print(
             "Please wait until the current recording or transcription is finished before restarting."
         )
@@ -259,22 +257,17 @@ def restart():
 
     # Using subprocess to call the wrapper script
     subprocess.Popen([python, "restart.py", script_to_run] + sys.argv[1:])
-    os._exit(0)  # Exit the application immediately after cleanup
+    os._exit(0)  # Terminate the current process
 
 
 def exit_app():
-    global recording_thread, transcription_queue, icon_update_queue, transcription_threads
-    if recording_thread and recording_thread.is_alive():
-        with recording_lock:
-            is_recording = False
-        recording_thread.join()
-    transcription_queue.join()
-    icon_update_queue.join()
-
-    for thread in transcription_threads:
-        if thread.is_alive():
-            thread.join()  # Wait for all transcription threads to finish
-
+    """Function to handle cleanup and exit the application."""
+    global recording_thread, is_recording, transcription_queue, icon_update_queue
+    if is_recording:
+        is_recording = False
+        recording_thread.join()  # Wait for the recording thread to finish
+    transcription_queue.join()  # Ensure all queued tasks are processed before exiting
+    icon_update_queue.join()  # Ensure all queued icon updates are processed before exiting
     if icon:
         icon.stop()  # Stop the tray icon
     os._exit(0)  # Exit the application immediately after cleanup
@@ -318,11 +311,9 @@ def main():
     print("Available audio devices:")
     print(sd.query_devices())
 
-    # Start the transcription queue processing thread
-    transcription_queue_thread = threading.Thread(
-        target=process_transcription_queue, daemon=True
-    )
-    transcription_queue_thread.start()
+    # Start the transcription thread
+    transcription_thread = threading.Thread(target=run_transcription, daemon=True)
+    transcription_thread.start()
 
     # Start the icon update thread
     icon_update_thread = threading.Thread(target=update_icon, daemon=True)
