@@ -28,6 +28,7 @@ copy_to_clipboard = False
 use_timestamp = False
 model_selected = "base"
 language_selected = None
+beep_off = False
 timestamp_str = ""
 audio_file_path = ""
 output_srt_path = ""
@@ -99,7 +100,7 @@ def record_audio(sample_rate=44100):
 
 
 def run_transcription():
-    global transcribing, model_selected, language_selected
+    global transcribing, model_selected, language_selected, beep_off
     while True:  # Infinite loop to process queue continuously
         audio_file_path = transcription_queue.get()  # Blocks until an item is available
         try:
@@ -127,11 +128,13 @@ def run_transcription():
                     "--output_format",
                     "srt",
                     "--threads",
-                    "4",
+                    "8",
                     "--sentence",
                 ]
                 if language_selected is not None:
                     srt_command.extend(["--language", language_selected])
+                if beep_off:
+                    srt_command.append("--beep_off")  # Add --beep_off if selected
 
                 print(
                     f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n"
@@ -271,7 +274,7 @@ def exit_app():
 
 
 def main():
-    global copy_to_clipboard, use_timestamp, model_selected, language_selected, tray
+    global copy_to_clipboard, use_timestamp, model_selected, language_selected, beep_off, tray
     parser = argparse.ArgumentParser(
         description="Audio recorder and transcriber with Whisper."
     )
@@ -293,12 +296,16 @@ def main():
         default=None,
         help="Select language for transcription.",
     )
+    parser.add_argument(
+        "--beep_off", action="store_true", help="Disable beep during transcription."
+    )
     parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
     use_timestamp = args.timestamp
     model_selected = args.model
     language_selected = args.language
+    beep_off = args.beep_off
     tray = args.tray
 
     print("Available audio devices:")
