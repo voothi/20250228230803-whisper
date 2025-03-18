@@ -202,11 +202,11 @@ def on_activate():
 
 def restart_with_language(language):
     global icon
-    if is_recording or transcribing:  # Check if recording or transcribing is active
-        print(
-            "Please wait until the current recording or transcription is finished before restarting."
-        )
-        return
+    # if is_recording or transcribing:  # Check if recording or transcribing is active
+    #     print(
+    #         "Please wait until the current recording or transcription is finished before restarting."
+    #     )
+    #     return
     icon.stop()  # Stop the system tray icon
     python = sys.executable
     script_to_run = __file__
@@ -227,7 +227,7 @@ def create_icon():
         image,
         "Audio Recorder and Transcriber",
         menu=pystray.Menu(
-            pystray.MenuItem("Record", on_activate, default=True),
+            pystray.MenuItem("Recording on / off", on_activate, default=True),
             pystray.MenuItem("Restart", restart),
             pystray.MenuItem(
                 "Set Language",
@@ -246,9 +246,9 @@ def create_icon():
 
 def restart():
     global icon
-    if is_recording or transcribing:  # Check if busy with recording/transcribing
-        print("Please finish current tasks before restarting.")
-        return
+    # if is_recording or transcribing:  # Check if busy with recording/transcribing
+    #     print("Please finish current tasks before restarting.")
+    #     return
     icon.stop()  # Stop the system tray icon
     python = sys.executable
     script_to_run = __file__
