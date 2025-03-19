@@ -6,4 +6,4 @@ REM Pause to see the results
 @REM pause
 
 REM Activate the virtual environment
-.\venv\Scripts\python.exe .\whisper.py --clipboard --timestamp --model "medium" --tray --beep_off
+.\venv\Scripts\python.exe .\whisper.py --clipboard --timestamp --model "medium" --tray

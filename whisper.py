@@ -129,7 +129,7 @@ def run_transcription():
                     "srt",
                     "--threads",
                     "8",
-                    "--sentence",
+                    "--sentence"
                 ]
                 if language_selected is not None:
                     srt_command.extend(["--language", language_selected])
