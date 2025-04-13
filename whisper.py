@@ -119,6 +119,8 @@ def run_transcription():
                 srt_command = [
                     whisper_faster_path,
                     audio_file_path,
+                    "--task",
+                    "transcribe",
                     "--model",
                     model_selected,
                     "--model_dir",
@@ -285,10 +287,10 @@ def main():
         "--timestamp", action="store_true", help="Use timestamp in file names."
     )
     parser.add_argument(
-        "--model",
-        choices=["base", "medium"],
+        "--model",  # Fixed typo from "modeel"
+        choices=["base", "medium", "distil-large-v3", "large-v3-turbo"],  # Added "turbo" option
         default="base",
-        help="Select Whisper model version (base or medium).",
+        help="Select Whisper model version (base, medium, or distil-large-v3, large-v3-turbo).",  # Updated help text
     )
     parser.add_argument(
         "--language",
