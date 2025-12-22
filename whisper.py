@@ -48,9 +48,13 @@ hotkey = config.get("settings", "hotkey")
 
 os.makedirs(base_dir, exist_ok=True)  # Create a directory if it does not already exist
 
-# Global state management variables
-transcribing = False
-is_recording = False
+# Global state management
+class State:
+    IDLE = "IDLE"
+    RECORDING = "RECORDING"
+    PROCESSING = "PROCESSING"
+
+current_state = State.IDLE
 audio_data = []
 recording_thread = None
 copy_to_clipboard = False
@@ -70,19 +74,20 @@ transcription_queue = Queue()
 icon_update_queue = Queue()
 
 
-def update_icon_color(color):
-    # if not is_recording:  # Prevent changing icon color while recording
-    icon_update_queue.put(color)
-
-
-def update_icon_based_on_queue():
-    if is_recording:
+def set_state(new_state):
+    global current_state
+    current_state = new_state
+    
+    if new_state == State.IDLE:
+        update_icon_color("blue")
+    elif new_state == State.RECORDING:
         update_icon_color("red")
-    else:
-        if transcription_queue.empty():
-            update_icon_color("blue")  # Queue is empty, so set to blue
-        else:
-            update_icon_color("yellow")  # Queue has items, so set to yellow
+    elif new_state == State.PROCESSING:
+        update_icon_color("yellow")
+
+
+def update_icon_color(color):
+    icon_update_queue.put(color)
 
 
 def update_icon():
@@ -96,10 +101,10 @@ def update_icon():
 
 
 def record_audio(sample_rate=44100):
-    global is_recording, audio_data, audio_file_path
+    global audio_data, audio_file_path
     print(f"\nRecording started... Press {hotkey} again to stop.")
-    is_recording = True
-    update_icon_color("red")  # Change icon to red
+    
+    # State is already set to RECORDING by on_activate before this thread starts
     audio_data.clear()
 
     def callback(indata, frames, time, status):
@@ -109,40 +114,52 @@ def record_audio(sample_rate=44100):
         with sd.InputStream(
             samplerate=sample_rate, channels=1, dtype="int16", callback=callback
         ):
-            while is_recording:
+            while current_state == State.RECORDING:
                 sd.sleep(100)
+        
         if audio_data:
             full_audio = np.concatenate(audio_data, axis=0)
             write(audio_file_path, sample_rate, full_audio)
             print(f"Recording saved to {audio_file_path}")
-            transcription_queue.put(
-                audio_file_path
-            )  # Add the file to the queue for transcription
-            update_icon_based_on_queue()  # Update icon based on queue state
+            transcription_queue.put(audio_file_path)
+            
+            # After recording, check if we need to process
+            # If queue has items, we go to PROCESSING
+            set_state(State.PROCESSING)
         else:
             print("No audio data recorded.")
+            # If no audio, go back to IDLE
+            if transcription_queue.empty():
+                set_state(State.IDLE)
+            else:
+                 set_state(State.PROCESSING)
+
     except Exception as e:
         print(f"An error occurred during recording: {e}")
-    finally:
-        is_recording = False
-        update_icon_based_on_queue()  # Ensure icon color is updated properly when recording stops
+        # Error recovery: check queue
+        if transcription_queue.empty():
+            set_state(State.IDLE)
+        else:
+            set_state(State.PROCESSING)
 
 
 def run_transcription():
-    global transcribing, model_selected, language_selected, beep_off
-    while True:  # Infinite loop to process queue continuously
-        audio_file_path = transcription_queue.get()  # Blocks until an item is available
+    global model_selected, language_selected, beep_off
+    while True:
+        audio_file_path = transcription_queue.get()
         try:
+            # We are now strictly processing this item
+            # Even if we were already in PROCESSING, this confirms it or maintains it
+            if current_state != State.RECORDING:
+                 set_state(State.PROCESSING)
+
             output_srt_path = os.path.splitext(audio_file_path)[0] + ".srt"
             output_txt_path = os.path.splitext(audio_file_path)[0] + ".txt"
-            transcribing = True
-            if not is_recording:
-                update_icon_color("yellow")  # Change icon to yellow
+            
             print(f"Starting transcription for {audio_file_path}...")
 
-            spoken_lines = []  # Initialize spoken_lines here
+            spoken_lines = []
 
-            # Command to run the transcription
             try:
                 # model_path is now loaded from config
                 srt_command = [
@@ -165,7 +182,7 @@ def run_transcription():
                 if language_selected is not None:
                     srt_command.extend(["--language", language_selected])
                 if beep_off:
-                    srt_command.append("--beep_off")  # Add --beep_off if selected
+                    srt_command.append("--beep_off")
 
                 print(
                     f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n"
@@ -193,14 +210,23 @@ def run_transcription():
             except Exception as e:
                 print(f"Error: {e}")
             finally:
-                transcribing = False
                 transcription_queue.task_done()
-                update_icon_based_on_queue()  # Update icon based on queue state
+                
+                # After task is done, check if more work exists
+                if transcription_queue.empty():
+                    # Only switch to IDLE if we aren't currently recording new audio
+                    if current_state != State.RECORDING:
+                        set_state(State.IDLE)
+                else:
+                    # More items? Stay in PROCESSING (Yellow)
+                    if current_state != State.RECORDING:
+                        set_state(State.PROCESSING)
+
         except Exception as e:
             print(f"Error processing {audio_file_path}: {e}")
-            transcribing = False
             transcription_queue.task_done()
-            update_icon_based_on_queue()  # Update icon based on queue state
+            if transcription_queue.empty() and current_state != State.RECORDING:
+                set_state(State.IDLE)
 
 
 def generate_timestamp():
@@ -208,8 +234,10 @@ def generate_timestamp():
 
 
 def on_activate():
-    global recording_thread, is_recording, timestamp_str, audio_file_path, output_srt_path, output_txt_path
-    if not is_recording:
+    global recording_thread, timestamp_str, audio_file_path, output_srt_path, output_txt_path
+    if current_state != State.RECORDING:
+        set_state(State.RECORDING)
+        
         if use_timestamp:
             timestamp_str = generate_timestamp()
         else:
@@ -226,32 +254,45 @@ def on_activate():
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
     else:
-        is_recording = False
-        # Let update_icon_based_on_queue handle the icon color
+        # Stop recording
+        # We don't change state to IDLE here immediately; record_audio will handle
+        # transitioning to PROCESSING or IDLE when it finishes saving logic.
+        # But we DO need to signal the loop in record_audio to stop.
+        # Since record_audio loops on `while current_state == State.RECORDING`, 
+        # we can temporarily switch state or use a flag?
+        # A clearer way with FSM: define a transition out of recording.
+        # But `record_audio` is blocking on that state check.
+        # Let's transition to PROCESSING immediately if we stop? 
+        # Actually, record_audio finishes, saves, *then* queues.
+        # So we should signal it to stop.
+        
+        # NOTE: To strictly follow FSM, an external event (hotkey) triggers a state change.
+        # We'll set a temporary "Signal" or just rely on the fact that if we change
+        # `current_state` to something else, `record_audio` loop will break.
+        # Let's set it to PROCESSING. This effectively stops the recording loop.
+        set_state(State.PROCESSING)
         print("Stopping recording...")
 
 
 def restart_with_language(language):
     global icon
-    # if is_recording or transcribing:  # Check if recording or transcribing is active
-    #     print(
-    #         "Please wait until the current recording or transcription is finished before restarting."
-    #     )
+    # if current_state != State.IDLE:  # Optional: prevent restart if busy
+    #     print("Please wait until idle...")
     #     return
-    icon.stop()  # Stop the system tray icon
+    icon.stop()
     python = sys.executable
     script_to_run = __file__
     args = sys.argv[1:] + [f"--language={language}"]
 
     print(f"\nRestarting with language: {language}\n")
 
-    # Using subprocess to call the wrapper script
     subprocess.Popen([python, "restart.py", script_to_run] + args)
-    os._exit(0)  # Terminate the current process
+    os._exit(0)
 
 
 def create_icon():
     global icon
+    # Initial icon is blue (IDLE) - handled by default in main/set_state or here
     image = Image.new("RGB", (16, 16), color="blue")
     icon = pystray.Icon(
         "Whisper",
@@ -277,31 +318,27 @@ def create_icon():
 
 def restart():
     global icon
-    # if is_recording or transcribing:  # Check if busy with recording/transcribing
-    #     print("Please finish current tasks before restarting.")
-    #     return
-    icon.stop()  # Stop the system tray icon
+    icon.stop()
     python = sys.executable
     script_to_run = __file__
 
     print(f"\nRestarting...\n")
 
-    # Using subprocess to call the wrapper script
     subprocess.Popen([python, "restart.py", script_to_run] + sys.argv[1:])
-    os._exit(0)  # Terminate the current process
+    os._exit(0)
 
 
 def exit_app():
     """Function to handle cleanup and exit the application."""
-    global recording_thread, is_recording, transcription_queue, icon_update_queue
-    if is_recording:
-        is_recording = False
-        recording_thread.join()  # Wait for the recording thread to finish
-    transcription_queue.join()  # Ensure all queued tasks are processed before exiting
-    icon_update_queue.join()  # Ensure all queued icon updates are processed before exiting
+    global recording_thread, transcription_queue, icon_update_queue
+    if current_state == State.RECORDING:
+        set_state(State.IDLE) # Break the loop
+        recording_thread.join()
+    transcription_queue.join()
+    icon_update_queue.join()
     if icon:
-        icon.stop()  # Stop the tray icon
-    os._exit(0)  # Exit the application immediately after cleanup
+        icon.stop()
+    os._exit(0)
 
 
 def main():
