@@ -106,7 +106,8 @@ def update_icon():
 
 def record_audio(sample_rate=44100):
     global audio_data, audio_file_path
-    print(f"\nRecording started... Press {hotkey} again to stop.")
+    stop_key = hotkey_fragment if fragment_mode else hotkey
+    print(f"\nRecording started... Press {stop_key} again to stop.")
     
     # State is already set to RECORDING by on_activate before this thread starts
     audio_data.clear()
