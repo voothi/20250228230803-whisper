@@ -47,6 +47,7 @@ else:
 
 model_path = config.get("paths", "model_directory")
 hotkey = config.get("settings", "hotkey")
+hotkey_fragment = config.get("settings", "hotkey_fragment", fallback="<ctrl>+<alt>+f")
 
 os.makedirs(base_dir, exist_ok=True)  # Create a directory if it does not already exist
 
@@ -60,6 +61,7 @@ current_state = State.IDLE
 audio_data = []
 recording_thread = None
 copy_to_clipboard = False
+fragment_mode = False
 use_timestamp = False
 model_selected = "base"
 language_selected = None
@@ -205,7 +207,17 @@ def run_transcription():
                 print("TXT transcription created from SRT.")
 
                 if copy_to_clipboard:
-                    pyperclip.copy("\n".join(spoken_lines))
+                    text_to_copy = "\n".join(spoken_lines)
+                    if fragment_mode:
+                        # Fragment mode: lowercase first char, remove trailing period
+                        if text_to_copy:
+                            # Lowercase first character
+                            text_to_copy = text_to_copy[0].lower() + text_to_copy[1:]
+                            # Remove trailing period (and possibly whitespace before it)
+                            if text_to_copy.strip().endswith("."):
+                                text_to_copy = text_to_copy.strip()[:-1]
+
+                    pyperclip.copy(text_to_copy)
                     print("Transcription copied to clipboard.")
             except subprocess.CalledProcessError as e:
                 print(f"Transcription error: {e.stderr}")
@@ -236,9 +248,17 @@ def generate_timestamp():
 
 
 def on_activate():
-    global recording_thread, timestamp_str, audio_file_path, output_srt_path, output_txt_path
+    global recording_thread, timestamp_str, audio_file_path, output_srt_path, output_txt_path, fragment_mode
     if current_state != State.RECORDING:
         set_state(State.RECORDING)
+        
+        # Determine mode based on how on_activate was called or set externally?
+        # Actually, global hotkeys call specific functions.
+        # We'll need to wrap this.
+        # But for now, let's assume `fragment_mode` is set before calling `on_activate`
+        # OR we change `on_activate` to accept an argument.
+        # Since `keyboard.GlobalHotKeys` expects a callable without args usually...
+        # We will create wrappers.
         
         if use_timestamp:
             timestamp_str = generate_timestamp()
@@ -317,6 +337,20 @@ def create_icon():
     )
     icon.run()
 
+def on_activate_normal():
+    global fragment_mode
+    if current_state != State.RECORDING:
+        fragment_mode = False
+        print("Starting NORMAL recording...")
+    on_activate()
+
+def on_activate_fragment():
+    global fragment_mode
+    if current_state != State.RECORDING:
+        fragment_mode = True
+        print("Starting FRAGMENT recording...")
+    on_activate()
+
 
 def restart():
     global icon
@@ -389,12 +423,18 @@ def main():
     icon_update_thread = threading.Thread(target=update_icon, daemon=True)
     icon_update_thread.start()
 
-    if tray:  # Create the system tray icon if specified
+    # Create the system tray icon if specified
+    if tray:
         tray_thread = threading.Thread(target=create_icon)
         tray_thread.start()
 
-    with keyboard.GlobalHotKeys({hotkey: on_activate}) as listener:
-        print(f"\nListening for {hotkey}...")
+    hotkey_map = {
+        hotkey: on_activate_normal,
+        hotkey_fragment: on_activate_fragment
+    }
+
+    with keyboard.GlobalHotKeys(hotkey_map) as listener:
+        print(f"\nListening for {hotkey} (Normal) and {hotkey_fragment} (Fragment)...")
         listener.join()
 
 
