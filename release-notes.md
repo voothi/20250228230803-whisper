@@ -1,5 +1,10 @@
 # Release Notes
 
+## [v1.4.4] - 2025-12-23
+
+### Changed
+-   **Restart Behavior**: The "Restart" tray option now explicitly resets the application to its default state, removing any previously selected language overrides. (RPC: 20251223002401)
+
 ## [v1.4.2] - 2025-12-23
 
 ### Added
