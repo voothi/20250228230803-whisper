@@ -2,7 +2,7 @@
 
 A powerful Python utility to record audio and transcribe it using the Faster-Whisper engine.
 
-[![Version](https://img.shields.io/badge/version-v1.4.2-blue)](./release-notes.md) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-v1.4.8-blue)](./release-notes.md) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This utility allows you to record your voice using a global hotkey and automatically transcribe it to text using OpenAI's Whisper models. It features system tray integration, clipboard support, and a highly configurable setup via `config.ini`.
 

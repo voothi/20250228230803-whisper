@@ -1,5 +1,11 @@
 # Release Notes
 
+## [v1.4.8] - 2025-12-23
+
+### Documentation
+-   **RFC Standardization**: Standardized all Request for Comment (RFC) documents to follow a consistent template and linked them directly from the release notes for better traceability. ([RFC: 20251223005037](./docs/rfcs/20251223005037-rfc-standardization.md))
+
+
 ## [v1.4.4] - 2025-12-23
 
 ### Changed
