@@ -361,22 +361,7 @@ def restart():
 
     print(f"\nRestarting...\n")
 
-    # Filter out language arguments to always restart without specifying a language
-    new_args = []
-    i = 1
-    while i < len(sys.argv):
-        arg = sys.argv[i]
-        if arg.startswith("--language="):
-            i += 1
-            continue
-        elif arg == "--language":
-            i += 2
-            continue
-        else:
-            new_args.append(arg)
-            i += 1
-
-    subprocess.Popen([python, "restart.py", script_to_run] + new_args)
+    subprocess.Popen([python, "restart.py", script_to_run] + sys.argv[1:])
     os._exit(0)
 
 
