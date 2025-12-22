@@ -13,10 +13,39 @@ from PIL import Image
 import sys
 import time
 from queue import Queue
+import configparser
+from pathlib import Path
 
-# Configuration parameters for paths
-whisper_faster_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\whisper-faster.exe"
-base_dir = r"U:\voothi\20250228230803-whisper\tmp"
+# --- Constants ---
+PROJECT_ROOT = Path(__file__).resolve().parent
+CONFIG_FILE = PROJECT_ROOT / "config.ini"
+
+
+def load_configuration(config_path):
+    if not config_path.exists():
+        print(f"Error: Configuration file not found at '{config_path}'.")
+        print("Please copy 'config.ini.template' to 'config.ini' and configure it.")
+        sys.exit(1)
+
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    return config
+
+
+config = load_configuration(CONFIG_FILE)
+
+# Configuration parameters from config file
+whisper_faster_path = config.get("paths", "whisper_faster_executable")
+
+base_dir_raw = config.get("paths", "base_directory")
+if os.path.isabs(base_dir_raw):
+    base_dir = base_dir_raw
+else:
+    base_dir = str(PROJECT_ROOT / base_dir_raw)
+
+model_path = config.get("paths", "model_directory")
+hotkey = config.get("settings", "hotkey")
+
 os.makedirs(base_dir, exist_ok=True)  # Create a directory if it does not already exist
 
 # Global state management variables
@@ -68,7 +97,7 @@ def update_icon():
 
 def record_audio(sample_rate=44100):
     global is_recording, audio_data, audio_file_path
-    print("\nRecording started... Press Ctrl + Alt + E again to stop.")
+    print(f"\nRecording started... Press {hotkey} again to stop.")
     is_recording = True
     update_icon_color("red")  # Change icon to red
     audio_data.clear()
@@ -115,7 +144,7 @@ def run_transcription():
 
             # Command to run the transcription
             try:
-                model_path = r"C:\Users\voothi\AppData\Roaming\Subtitle Edit\Whisper\Purfview-Whisper-Faster\_models"
+                # model_path is now loaded from config
                 srt_command = [
                     whisper_faster_path,
                     audio_file_path,
@@ -325,8 +354,8 @@ def main():
         tray_thread = threading.Thread(target=create_icon)
         tray_thread.start()
 
-    with keyboard.GlobalHotKeys({"<ctrl>+<alt>+e": on_activate}) as listener:
-        print("\nListening for Ctrl + Alt + E...")
+    with keyboard.GlobalHotKeys({hotkey: on_activate}) as listener:
+        print(f"\nListening for {hotkey}...")
         listener.join()
 
 
