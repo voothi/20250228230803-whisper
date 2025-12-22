@@ -1,5 +1,5 @@
 20250301152714
-U:\voothi\20250228230803-whisper\venv\Scripts\python.exe U:\voothi\20250228230803-whisper\whisper.py --clipboard --timestamp --model "base" --tray   
+U:\voothi\20250228230803-whisper\venv\Scripts\python.exe U:\voothi\20250228230803-whisper\whisper.py --clipboard --timestamp --model "base" --tray  
 
 
 
@@ -8,31 +8,31 @@ U:\voothi\20250228230803-whisper\venv\Scripts\python.exe U:\voothi\2025022823080
 
  
 
-Пиши комментарии к коду только на англ.
+Write comments to the code in English only.
 
 
 
-Напиши утилиту на питоне.
+Write a utility in Python.
 
-Утилита на входе по сочетанию клавиш Ctrl Alt R берет мой голос с микрофона.
+Input utility using the keyboard shortcut Ctrl Alt R takes my voice from the microphone.
 
-Первое нажатие на это сочетание начинает запись. Второе нажатие - зананчивает запись и начинает распознование с помощью Whisper.
+The first click on this combination starts recording. The second press ends the recording and begins recognition using Whisper.
 
-Далее запись передается и обрабатывается Whisper.
+The recording is then transferred and processed by Whisper.
 
-На выходе выдает распознанную речь в виде текста. И вставляет этот текст из буфера.
-
-
+At the output, it produces recognized speech in the form of text. And inserts this text from the buffer.
 
 
 
-Модель Whisper.
+
+
+Model Whisper.
 
 C:\Tools\open-webui\venv\Lib\site-packages\open_webui\data\cache\whisper\models\models--Systran--faster-whisper-base
 
 
 
-Утиита Whisper.
+Utiita Whisper.
 
 
 
