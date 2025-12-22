@@ -1,5 +1,14 @@
 # Release Notes
 
+## [v1.4.2] - 2025-12-23
+
+### Added
+-   **Fragment Mode**: Introduced a new transcription mode for seamless integration into mid-sentence contexts (e.g., Anki cards, chat messages).
+    -   **Behavior**: Transcribed text automatically starts with a **lowercase** letter and has **no trailing period**.
+    -   **Hotkey**: Triggered by a dedicated hotkey (Default: `<ctrl>+<alt>+f`).
+    -   **Configuration**: Added `hotkey_fragment` setting to `config.ini` to customize this shortcut.
+-   **Enhanced Feedback**: The console output now intelligently prompts the user with the correct hotkey to stop recording, depending on which mode (Normal vs. Fragment) is active.
+
 ## [v1.2.2] - 2025-12-22
 
 ### Architecture
