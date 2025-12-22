@@ -32,7 +32,7 @@ This utility allows you to record your voice using a global hotkey and automatic
 -   **Sequential Processing**: Audio recordings are queued and processed sequentially, ensuring no data is lost even if you record multiple clips in rapid succession.
 -   **Timestamping**: Option to save files with timestamps.
 
-[Back to Top](#table-of-contents)
+[Return To Top](#table-of-contents)
 
 ## Prerequisites
 
@@ -61,7 +61,7 @@ pip install sounddevice scipy pynput pyperclip pystray Pillow numpy
     *   `model_directory`: Directory where your Whisper models are stored.
     *   `base_directory`: Where temporary audio and text files will be saved.
 
-[Back to Top](#table-of-contents)
+[Return To Top](#table-of-contents)
 
 ## Configuration
 
@@ -75,7 +75,7 @@ All settings are managed in `config.ini`.
 **`[settings]` section**:
 -   `hotkey`: Global hotkey string (e.g., `<ctrl>+<alt>+e`).
 
-[Back to Top](#table-of-contents)
+[Return To Top](#table-of-contents)
 
 ## Usage
 
@@ -104,10 +104,10 @@ Run with the recommended **turbo** model, system tray, and clipboard support:
 python whisper.py --model large-v3-turbo --tray --clipboard
 ```
 
-[Back to Top](#table-of-contents)
+[Return To Top](#table-of-contents)
 
 ## License
 
 [MIT](./LICENSE)
 
-[Back to Top](#table-of-contents)
+[Return To Top](#table-of-contents)
