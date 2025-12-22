@@ -29,13 +29,15 @@ This utility allows you to record your voice using a global hotkey and automatic
 -   **Multiple Models**: Supports `base`, `medium`, `distil-large-v3`, and the high-performance `large-v3-turbo`.
 -   **Multilingual**: Easy language switching (English, German, Russian, Ukrainian) via the tray menu or command line.
 -   **Clipboard Support**: Automatically copy transcribed text to the clipboard.
+-   **Sequential Processing**: Audio recordings are queued and processed sequentially, ensuring no data is lost even if you record multiple clips in rapid succession.
 -   **Timestamping**: Option to save files with timestamps.
 
 [Back to Top](#table-of-contents)
 
 ## Prerequisites
 
-1.  **Python 3**: Python 3.8 or higher is recommended.
+1.  **Windows 11**: These instructions are tailored for and tested on Windows 11.
+2.  **Python 3**: Python 3.8 or higher is recommended.
 2.  **Purfview-Whisper-Faster**: The independent executable for Faster-Whisper.
 3.  **Audio Backend**: A working microphone.
 
