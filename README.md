@@ -2,7 +2,7 @@
 
 A powerful Python utility to record audio and transcribe it using the Faster-Whisper engine.
 
-[![Version](https://img.shields.io/badge/version-v1.1.0-blue)](./release-notes.md) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-v1.2.2-blue)](./release-notes.md) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This utility allows you to record your voice using a global hotkey and automatically transcribe it to text using OpenAI's Whisper models. It features system tray integration, clipboard support, and a highly configurable setup via `config.ini`.
 
@@ -31,6 +31,17 @@ This utility allows you to record your voice using a global hotkey and automatic
 -   **Clipboard Support**: Automatically copy transcribed text to the clipboard.
 -   **Sequential Processing**: Audio recordings are queued and processed sequentially, ensuring no data is lost even if you record multiple clips in rapid succession.
 -   **Timestamping**: Option to save files with timestamps.
+-   **Robust Architecture**: Built on a Functional Finite State Machine (Automatic Programming Pattern) for rock-solid reliability and sequence handling.
+
+## Architecture
+
+The application uses a **Functional FSM (Finite State Machine)** to manage its internal logic, ensuring high reliability:
+
+1.  **IDLE** (Blue Icon): Waiting for user input.
+2.  **RECORDING** (Red Icon): capturing audio.
+3.  **PROCESSING** (Yellow Icon): Transcribing audio queue.
+
+This "Automatic Programming" pattern guarantees that recordings and transcriptions are always processed in the correct order, and the status icon always reflects the true state of the application.
 
 [Return To Top](#table-of-contents)
 

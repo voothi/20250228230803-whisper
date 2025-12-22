@@ -1,5 +1,14 @@
 # Release Notes
 
+## [v1.2.2] - 2025-12-22
+
+### Architecture
+-   **Automatic Programming Pattern (Functional FSM)**: Refactored the internal engine to use a robust Functional Finite State Machine.
+    -   **Strict State Control**: The application now operates in strict `IDLE` (Blue), `RECORDING` (Red), or `PROCESSING` (Yellow) states.
+    -   **Centralized Transitions**: All status changes flow through a single `set_state()` function, eliminating race conditions.
+    -   **Reliability**: Sequential processing and tray icon updates are now guaranteed by the state machine logic.
+-   **Dependencies**: Added `sounddevice` logic validation within the new state architecture.
+
 ## [v1.1.0] - 2025-12-22
 
 ### Added
