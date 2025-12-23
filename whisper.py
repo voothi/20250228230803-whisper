@@ -459,13 +459,40 @@ def main():
         tray_thread = threading.Thread(target=create_icon)
         tray_thread.start()
 
-    hotkey_map = {
-        hotkey: on_activate_primary,
-        hotkey_fragment: on_activate_fragment
-    }
+    # Helper to create VK-based hotkeys for layout independence
+    def create_vk_hotkey(hotkey_str, callback):
+        # Parse the hotkey string into a set of keys
+        # We take the first combination if multiple are returned
+        keys = keyboard.HotKey.parse(hotkey_str)[0]
+        new_keys = set()
+        for key in keys:
+            if isinstance(key, keyboard.KeyCode) and key.char:
+                # Convert a-z characters to their virtual key codes
+                # This ensures we listen to the physical key, not the layout-dependent char
+                if 'a' <= key.char.lower() <= 'z':
+                    new_keys.add(keyboard.KeyCode.from_vk(ord(key.char.upper())))
+                else:
+                    new_keys.add(key)
+            else:
+                new_keys.add(key)
+        return keyboard.HotKey(new_keys, callback)
 
-    with keyboard.GlobalHotKeys(hotkey_map) as listener:
-        print(f"\nListening for {hotkey} (Normal) and {hotkey_fragment} (Fragment)...")
+    hk_primary = create_vk_hotkey(hotkey, on_activate_primary)
+    hk_fragment = create_vk_hotkey(hotkey_fragment, on_activate_fragment)
+    hotkeys = [hk_primary, hk_fragment]
+
+    def on_press(key):
+        k = listener.canonical(key)
+        for hk in hotkeys:
+            hk.press(k)
+
+    def on_release(key):
+        k = listener.canonical(key)
+        for hk in hotkeys:
+            hk.release(k)
+
+    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+        print(f"\nListening for {hotkey} (Normal) and {hotkey_fragment} (Fragment) [Layout Independent]...")
         listener.join()
 
 
