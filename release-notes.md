@@ -1,5 +1,14 @@
 # Release Notes
 
+## [v1.15.0] - 2025-12-23
+
+### Added
+-   **External Audio Processing**: Major update enabling transcription of existing files without recording.
+-   **Clipboard Scanner Mode**: Toggleable mode to scan clipboard for file paths (MP3, WAV, MP4, etc.) and transcribe them upon hotkey press. Includes console-based confirmation.
+-   **Multi-File CLI Support**: Pass multiple file paths directly as arguments (e.g., `python whisper.py file1.mp3 file2.wav`).
+-   **Smart File Naming**: Implemented `get_unique_path` to handle existing output files by adding incrementing suffixes (`.1`, `.2`, etc.), preventing data overwrite.
+-   **Temporary Processing**: Transcriptions are now performed in the `tmp` directory before being moved to their final location, improving file safety.
+
 ## [v1.14.16] - 2025-12-23
 
 ### Added

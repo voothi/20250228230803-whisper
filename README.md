@@ -2,7 +2,7 @@
 
 A powerful Python utility to record audio and transcribe it using the Faster-Whisper engine.
 
-[![Version](https://img.shields.io/badge/version-v1.4.14-blue)](./release-notes.md) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-v1.15.0-blue)](./release-notes.md) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This utility allows you to record your voice using a global hotkey and automatically transcribe it to text using OpenAI's Whisper models. It features system tray integration, clipboard support, and a highly configurable setup via `config.ini`.
 
@@ -32,6 +32,9 @@ This utility allows you to record your voice using a global hotkey and automatic
 -   **Multilingual**: Easy language switching (English, German, Russian, Ukrainian) via the tray menu or command line.
 -   **Clipboard Support**: Automatically copy transcribed text to the clipboard.
 -   **Sequential Processing**: Audio recordings are queued and processed sequentially, ensuring no data is lost even if you record multiple clips in rapid succession.
+-   **External File Processing**: **NEW!** Transcribe existing audio/video files (MP3, MP4, WAV, etc.) by passing them as CLI arguments or using the Clipboard Scanner.
+-   **Clipboard Scanner Mode**: **NEW!** Copy file paths to your clipboard and hit the hotkey to transcribe them. Includes console-based confirmation to prevent accidental triggers.
+-   **Smart File Naming**: **NEW!** Automatically handles existing transcriptions by adding incrementing suffixes (e.g., `audit.srt` -> `audit.1.srt`), ensuring no work is overwritten.
 -   **Timestamping**: Option to save files with timestamps.
 -   **Robust Architecture**: Built on a Functional Finite State Machine (Automatic Programming Pattern) for rock-solid reliability and sequence handling.
 
@@ -109,6 +112,8 @@ python whisper.py [arguments]
 | `--timestamp`   | Add timestamps to filenames.                                                |
 | `--beep_off`    | Disable beep sound during transcription.                                    |
 | `--fragment`    | Start with Fragment Mode enabled (affects primary hotkey).                  |
+| `--file-scanner` | Start with File Processing Mode (Clipboard Scanner) enabled.               |
+| `files` (pos)    | List of file paths to transcribe immediately in CLI mode.                   |
 
 ### Example
 

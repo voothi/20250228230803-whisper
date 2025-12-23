@@ -16,11 +16,53 @@ from queue import Queue
 import configparser
 from pathlib import Path
 
-__version__ = "1.14.16"
+__version__ = "1.15.0"
 
 # --- Constants ---
 PROJECT_ROOT = Path(__file__).resolve().parent
 CONFIG_FILE = PROJECT_ROOT / "config.ini"
+SUPPORTED_EXTENSIONS = {'.wav', '.mp3', '.m4a', '.mp4', '.mkv', '.flac', '.ogg', '.aac'}
+
+
+def get_unique_path(path):
+    """Adds .1, .2, etc. to the filename if it already exists."""
+    path = Path(path)
+    if not path.exists():
+        return str(path)
+
+    parent = path.parent
+    stem = path.stem
+    suffix = path.suffix
+
+    counter = 1
+    while True:
+        new_name = f"{stem}.{counter}{suffix}"
+        new_path = parent / new_name
+        if not new_path.exists():
+            return str(new_path)
+        counter += 1
+
+
+def get_files_from_clipboard():
+    """Extracts valid existing audio/video files from clipboard text."""
+    try:
+        text = pyperclip.paste()
+        if not text:
+            return []
+
+        lines = text.splitlines()
+        found_files = []
+        for line in lines:
+            line = line.strip().strip('"')  # Remove quotes if copied from explorer
+            if not line:
+                continue
+            path = Path(line)
+            if path.exists() and path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS:
+                found_files.append(str(path))
+        return found_files
+    except Exception as e:
+        print(f"Error reading clipboard: {e}")
+        return []
 
 
 def load_configuration(config_path):
@@ -63,6 +105,7 @@ recording_thread = None
 copy_to_clipboard = False
 fragment_mode = False
 default_fragment_mode = False  # New global for tray setting
+file_scanner_enabled = False  # Toggle for clipboard processing
 use_timestamp = False
 model_selected = "base"
 language_selected = None
@@ -155,13 +198,22 @@ def run_transcription():
         audio_file_path = transcription_queue.get()
         try:
             # We are now strictly processing this item
-            # Even if we were already in PROCESSING, this confirms it or maintains it
             if current_state != State.RECORDING:
-                 set_state(State.PROCESSING)
+                set_state(State.PROCESSING)
 
-            output_srt_path = os.path.splitext(audio_file_path)[0] + ".srt"
-            output_txt_path = os.path.splitext(audio_file_path)[0] + ".txt"
-            
+            # Use a temporary directory for initial output to handle unique naming
+            temp_output_dir = str(PROJECT_ROOT / "tmp")
+            os.makedirs(temp_output_dir, exist_ok=True)
+
+            # Expected name from whisper-faster (based on input filename)
+            input_basename = os.path.basename(os.path.splitext(audio_file_path)[0])
+            temp_srt_path = os.path.join(temp_output_dir, f"{input_basename}.srt")
+
+            # Final output paths - use get_unique_path to handle existing files
+            final_srt_base = os.path.splitext(audio_file_path)[0] + ".srt"
+            final_srt_path = get_unique_path(final_srt_base)
+            final_txt_path = os.path.splitext(final_srt_path)[0] + ".txt"
+
             print(f"Starting transcription for {audio_file_path}...")
 
             spoken_lines = []
@@ -178,7 +230,7 @@ def run_transcription():
                     "--model_dir",
                     model_path,
                     "--output_dir",
-                    os.path.dirname(output_srt_path),
+                    temp_output_dir,
                     "--output_format",
                     "srt",
                     "--threads",
@@ -194,40 +246,47 @@ def run_transcription():
                     f"\nFull command to execute transcription: \n{' '.join(srt_command)}\n"
                 )
                 subprocess.run(srt_command, check=True, capture_output=True, text=True)
-                print("SRT transcription completed.")
 
-                with open(output_srt_path, "r", encoding="utf-8") as srt_file:
-                    for line in srt_file:
-                        if (
-                            "-->" not in line
-                            and line.strip() != ""
-                            and not line.strip().isdigit()
-                        ):
-                            spoken_lines.append(line.strip())
-                with open(output_txt_path, "w", encoding="utf-8") as txt_file:
-                    txt_file.write("\n".join(spoken_lines))
-                print("TXT transcription created from SRT.")
+                if os.path.exists(temp_srt_path):
+                    # Move result to the final location with unique name
+                    os.replace(temp_srt_path, final_srt_path)
+                    print(f"SRT transcription completed: {final_srt_path}")
 
-                if copy_to_clipboard:
-                    text_to_copy = "\n".join(spoken_lines)
-                    if fragment_mode:
-                        # Fragment mode: lowercase first char, remove trailing period
-                        if text_to_copy:
-                            # Lowercase first character
-                            text_to_copy = text_to_copy[0].lower() + text_to_copy[1:]
-                            # Remove trailing period (and possibly whitespace before it)
-                            if text_to_copy.strip().endswith("."):
-                                text_to_copy = text_to_copy.strip()[:-1]
+                    with open(final_srt_path, "r", encoding="utf-8") as srt_file:
+                        for line in srt_file:
+                            if (
+                                "-->" not in line
+                                and line.strip() != ""
+                                and not line.strip().isdigit()
+                            ):
+                                spoken_lines.append(line.strip())
+                    with open(final_txt_path, "w", encoding="utf-8") as txt_file:
+                        txt_file.write("\n".join(spoken_lines))
+                    print(f"TXT transcription created: {final_txt_path}")
 
-                    pyperclip.copy(text_to_copy)
-                    print("Transcription copied to clipboard.")
+                    if copy_to_clipboard:
+                        text_to_copy = "\n".join(spoken_lines)
+                        if fragment_mode:
+                            # Fragment mode: lowercase first char, remove trailing period
+                            if text_to_copy:
+                                # Lowercase first character
+                                text_to_copy = text_to_copy[0].lower() + text_to_copy[1:]
+                                # Remove trailing period (and possibly whitespace before it)
+                                if text_to_copy.strip().endswith("."):
+                                    text_to_copy = text_to_copy.strip()[:-1]
+
+                        pyperclip.copy(text_to_copy)
+                        print("Transcription copied to clipboard.")
+                else:
+                    print(f"Error: Transcription output {temp_srt_path} was not created.")
+
             except subprocess.CalledProcessError as e:
                 print(f"Transcription error: {e.stderr}")
             except Exception as e:
                 print(f"Error: {e}")
             finally:
                 transcription_queue.task_done()
-                
+
                 # After task is done, check if more work exists
                 if transcription_queue.empty():
                     # Only switch to IDLE if we aren't currently recording new audio
@@ -252,16 +311,30 @@ def generate_timestamp():
 def on_activate():
     global recording_thread, timestamp_str, audio_file_path, output_srt_path, output_txt_path, fragment_mode
     if current_state != State.RECORDING:
+        # Check for files in clipboard if scanner mode is active
+        if file_scanner_enabled:
+            found_files = get_files_from_clipboard()
+            if found_files:
+                print(f"\n[Scanner] Found {len(found_files)} supported file(s) in clipboard:")
+                for f in found_files:
+                    print(f"  - {f}")
+
+                # Console confirmation
+                confirm = input("Process these files? (y/n, default 'y'): ").lower().strip()
+                if confirm in ('', 'y', 'yes'):
+                    print("Adding files to transcription queue...")
+                    for f in found_files:
+                        transcription_queue.put(f)
+                    
+                    # Ensure we are in PROCESSING state if we have items
+                    if not transcription_queue.empty():
+                        set_state(State.PROCESSING)
+                    return # Skip microphone recording
+                else:
+                    print("Skipping clipboard files. Starting microphone recording...")
+
         set_state(State.RECORDING)
-        
-        # Determine mode based on how on_activate was called or set externally?
-        # Actually, global hotkeys call specific functions.
-        # We'll need to wrap this.
-        # But for now, let's assume `fragment_mode` is set before calling `on_activate`
-        # OR we change `on_activate` to accept an argument.
-        # Since `keyboard.GlobalHotKeys` expects a callable without args usually...
-        # We will create wrappers.
-        
+
         if use_timestamp:
             timestamp_str = generate_timestamp()
         else:
@@ -278,22 +351,7 @@ def on_activate():
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
     else:
-        # Stop recording
-        # We don't change state to IDLE here immediately; record_audio will handle
-        # transitioning to PROCESSING or IDLE when it finishes saving logic.
-        # But we DO need to signal the loop in record_audio to stop.
-        # Since record_audio loops on `while current_state == State.RECORDING`, 
-        # we can temporarily switch state or use a flag?
-        # A clearer way with FSM: define a transition out of recording.
-        # But `record_audio` is blocking on that state check.
-        # Let's transition to PROCESSING immediately if we stop? 
-        # Actually, record_audio finishes, saves, *then* queues.
-        # So we should signal it to stop.
-        
-        # NOTE: To strictly follow FSM, an external event (hotkey) triggers a state change.
-        # We'll set a temporary "Signal" or just rely on the fact that if we change
-        # `current_state` to something else, `record_audio` loop will break.
-        # Let's set it to PROCESSING. This effectively stops the recording loop.
+        # Signal recording loop to stop by transitioning state
         set_state(State.PROCESSING)
         print("Stopping recording...")
 
@@ -338,6 +396,11 @@ def create_icon():
                 toggle_fragment_mode,
                 checked=lambda item: default_fragment_mode
             ),
+            pystray.MenuItem(
+                "File Processing Mode",
+                toggle_file_scanner,
+                checked=lambda item: file_scanner_enabled
+            ),
             pystray.MenuItem("Restart", restart),
             pystray.MenuItem(
                 "Set Language",
@@ -364,6 +427,10 @@ def on_activate_primary():
 def toggle_fragment_mode(icon, item):
     global default_fragment_mode
     default_fragment_mode = not default_fragment_mode
+
+def toggle_file_scanner(icon, item):
+    global file_scanner_enabled
+    file_scanner_enabled = not file_scanner_enabled
 
 def on_activate_fragment():
     global fragment_mode
@@ -439,18 +506,24 @@ def main():
     )
     parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")
     parser.add_argument("--fragment", action="store_true", help="Start with Fragment Mode enabled.")
+    parser.add_argument(
+        "--file-scanner", action="store_true", help="Start with File Processing Mode enabled."
+    )
+    parser.add_argument(
+        "files", nargs="*", help="Optional list of file paths to transcribe immediately."
+    )
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
     use_timestamp = args.timestamp
     model_selected = args.model
     language_selected = args.language
     beep_off = args.beep_off
-    beep_off = args.beep_off
     tray = args.tray
-    
+
     # Set initial state from CLI arg
-    global default_fragment_mode
+    global default_fragment_mode, file_scanner_enabled
     default_fragment_mode = args.fragment
+    file_scanner_enabled = args.file_scanner
 
     print("Available audio devices:")
     print(sd.query_devices())
@@ -458,6 +531,22 @@ def main():
     # Start the transcription thread
     transcription_thread = threading.Thread(target=run_transcription, daemon=True)
     transcription_thread.start()
+
+    # If files were passed as arguments, queue them up
+    if args.files:
+        print(f"\nProcessing {len(args.files)} file(s) from arguments...")
+        for f in args.files:
+            path = Path(f)
+            if path.exists() and path.is_file():
+                transcription_queue.put(str(path))
+            else:
+                print(f"Warning: File not found or invalid: {f}")
+
+        # If not in tray mode, wait for queue to be empty and then exit
+        if not tray:
+            transcription_queue.join()
+            print("All files processed. Exiting.")
+            sys.exit(0)
 
     # Start the icon update thread
     icon_update_thread = threading.Thread(target=update_icon, daemon=True)

@@ -125,3 +125,5 @@ IntelliFilter/
 
 venv/
 tmp/
+
+__pycache__
