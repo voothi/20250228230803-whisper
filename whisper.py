@@ -17,7 +17,7 @@ from queue import Queue
 import configparser
 from pathlib import Path
 
-__version__ = "1.18.0"
+__version__ = "1.18.2"
 
 # --- Constants ---
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -401,9 +401,9 @@ def on_activate():
 
 def restart_with_language(language):
     global icon
-    # if current_state != State.IDLE:  # Optional: prevent restart if busy
-    #     print("Please wait until idle...")
-    #     return
+    if current_state != State.IDLE:
+        print(f"Application is busy ({current_state}). Please wait until IDLE to switch languages, or use 'Restart' to reset.")
+        return
     icon.stop()
     python = sys.executable
     script_to_run = __file__
