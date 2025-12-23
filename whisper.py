@@ -171,7 +171,8 @@ def record_audio(sample_rate=44100):
             full_audio = np.concatenate(audio_data, axis=0)
             write(audio_file_path, sample_rate, full_audio)
             print(f"Recording saved to {audio_file_path}")
-            transcription_queue.put(audio_file_path)
+            # Tuple: (path, skip_clipboard)
+            transcription_queue.put((audio_file_path, False))
             
             # After recording, check if we need to process
             # If queue has items, we go to PROCESSING
@@ -196,7 +197,13 @@ def record_audio(sample_rate=44100):
 def run_transcription():
     global model_selected, language_selected, beep_off
     while True:
-        audio_file_path = transcription_queue.get()
+        queue_item = transcription_queue.get()
+        # Handle both old (string) and new (tuple) queue items for robustness
+        if isinstance(queue_item, tuple):
+            audio_file_path, skip_clipboard = queue_item
+        else:
+            audio_file_path, skip_clipboard = queue_item, False
+
         try:
             # We are now strictly processing this item
             if current_state != State.RECORDING:
@@ -265,7 +272,7 @@ def run_transcription():
                         txt_file.write("\n".join(spoken_lines))
                     print(f"TXT transcription created: {final_txt_path}")
 
-                    if copy_to_clipboard:
+                    if copy_to_clipboard and not skip_clipboard:
                         text_to_copy = "\n".join(spoken_lines)
                         if fragment_mode:
                             # Fragment mode: lowercase first char, remove trailing period
@@ -278,6 +285,8 @@ def run_transcription():
 
                         pyperclip.copy(text_to_copy)
                         print("Transcription copied to clipboard.")
+                    elif copy_to_clipboard and skip_clipboard:
+                        print("Skipping clipboard copy (batch processing).")
                 else:
                     print(f"Error: Transcription output {temp_srt_path} was not created.")
 
@@ -324,8 +333,10 @@ def on_activate():
                 confirm = input("Process these files? (y/n, default 'y'): ").lower().strip()
                 if confirm in ('', 'y', 'yes'):
                     print("Adding files to transcription queue...")
+                    # If more than 1 file, we set skip_clipboard to True
+                    skip_cb = len(found_files) > 1
                     for f in found_files:
-                        transcription_queue.put(f)
+                        transcription_queue.put((f, skip_cb))
                     
                     # Ensure we are in PROCESSING state if we have items
                     if not transcription_queue.empty():
@@ -536,10 +547,11 @@ def main():
     # If files were passed as arguments, queue them up
     if args.files:
         print(f"\nProcessing {len(args.files)} file(s) from arguments...")
+        skip_cb = len(args.files) > 1
         for f in args.files:
             path = Path(f)
             if path.exists() and path.is_file():
-                transcription_queue.put(str(path))
+                transcription_queue.put((str(path), skip_cb))
             else:
                 print(f"Warning: File not found or invalid: {f}")
 
