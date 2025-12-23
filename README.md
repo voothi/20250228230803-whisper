@@ -8,6 +8,8 @@ This utility allows you to record your voice using a global hotkey and automatic
 
 **Note:** The **turbo** model (`large-v3-turbo`) is currently recommended as the best option for both quality and speed.
 
+<img width="845" height="540" alt="20251223161318" src="https://github.com/user-attachments/assets/312a1cff-34fb-4f80-96b8-0afbfb72994a" />
+
 ## Table of Contents
 
 - [Whisper Audio Recorder & Transcriber](#whisper-audio-recorder--transcriber)
