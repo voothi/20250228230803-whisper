@@ -26,7 +26,7 @@ This utility allows you to record your voice using a global hotkey and automatic
 ## Features
 
 -   **Global Hotkey**: Start and stop recording from anywhere using a configurable hotkey (default: `Ctrl+Alt+E`).
--   **Fragment Mode**: **NEW!** Dedicated hotkey (default: `Ctrl+Alt+F`) for transcribing text phrases (lowercase, no trailing period) - perfect for inserting into existing sentences.
+-   **Fragment Mode**: Dedicated hotkey (default: `Ctrl+Alt+F`) for transcribing text phrases (lowercase, no trailing period) - perfect for inserting into existing sentences.
 -   **System Tray Integration**: Visual feedback with icon color changes (Red for recording, Yellow for processing, Blue for idle) and menu controls.
 -   **Fragment Mode Toggle**: Toggle "Fragment Mode" directly from the tray menu to use the primary hotkey for fragment transcription without needing a separate shortcut.
 -   **Configuration-Driven**: All paths and settings are managed in a `config.ini` file.
@@ -34,9 +34,9 @@ This utility allows you to record your voice using a global hotkey and automatic
 -   **Multilingual**: Easy language switching (English, German, Russian, Ukrainian) via the tray menu or command line.
 -   **Clipboard Support**: Automatically copy transcribed text to the clipboard.
 -   **Sequential Processing**: Audio recordings are queued and processed sequentially, ensuring no data is lost even if you record multiple clips in rapid succession.
--   **External File Processing**: **NEW!** Transcribe existing audio/video files (MP3, MP4, WAV, etc.) by passing them as CLI arguments or using the Clipboard Scanner.
--   **Clipboard Scanner Mode**: **NEW!** Copy file paths to your clipboard and hit the hotkey to transcribe them. Includes console-based confirmation to prevent accidental triggers.
--   **Smart File Naming**: **NEW!** Automatically handles existing transcriptions by adding incrementing suffixes (e.g., `audit.srt` -> `audit.1.srt`), ensuring no work is overwritten.
+-   **External File Processing**: Transcribe existing audio/video files (MP3, MP4, WAV, etc.) by passing them as CLI arguments or using the Clipboard Scanner.
+-   **Clipboard Scanner Mode**: Copy file paths to your clipboard and hit the hotkey to transcribe them. Includes console-based confirmation to prevent accidental triggers.
+-   **Smart File Naming**: Automatically handles existing transcriptions by adding incrementing suffixes (e.g., `audit.srt` -> `audit.1.srt`), ensuring no work is overwritten.
 -   **Timestamping**: Option to save files with timestamps.
 -   **Robust Architecture**: Built on a Functional Finite State Machine (Automatic Programming Pattern) for rock-solid reliability and sequence handling.
 
@@ -98,6 +98,7 @@ All settings are managed in `config.ini`.
 
 **`[settings]` section**:
 -   `hotkey`: Global hotkey string (e.g., `<ctrl>+<alt>+e`).
+-   `hotkey_fragment`: Fragment mode hotkey string (e.g., `<ctrl>+<alt>+f`).
 
 [Return To Top](#table-of-contents)
 
