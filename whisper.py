@@ -228,10 +228,14 @@ def log_execution(audio_path, wait_time, process_time):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"{timestamp}\t{filename}\t{wait_time:.4f}\t{process_time:.4f}\t{model_selected}\t{language_selected}\n"
     
+    # Check if we need to write headers (file doesn't exist or is empty)
+    write_header = not log_file.exists() or log_file.stat().st_size == 0
+    
     try:
         with open(log_file, "a", encoding="utf-8") as f:
+            if write_header:
+                 f.write("Timestamp\tFilename\tWait(s)\tProcess(s)\tModel\tLanguage\n")
             f.write(log_entry)
-            # Add header if file was empty/new? Simple append is fine for now.
     except Exception as e:
         print(f"Failed to write to log file: {e}")
 
