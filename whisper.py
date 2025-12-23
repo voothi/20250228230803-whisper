@@ -4,6 +4,7 @@ from pynput import keyboard
 import subprocess
 import threading
 import os
+import shutil
 import numpy as np
 import argparse
 import pyperclip
@@ -249,7 +250,7 @@ def run_transcription():
 
                 if os.path.exists(temp_srt_path):
                     # Move result to the final location with unique name
-                    os.replace(temp_srt_path, final_srt_path)
+                    shutil.move(temp_srt_path, final_srt_path)
                     print(f"SRT transcription completed: {final_srt_path}")
 
                     with open(final_srt_path, "r", encoding="utf-8") as srt_file:
