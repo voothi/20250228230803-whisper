@@ -66,7 +66,7 @@ Ensure you have the project files locally.
 
 **Step 2: Download Whisper Backend**
 Download the `whisper-faster.exe` program and models from the following link:
-[Purfview-Whisper-Faster.zip](https://github.com/voothi/20250228230803-whisper/releases/download/v1.1.0/Purfview-Whisper-Faster.zip)
+[Purfview-Whisper-Faster.zip](https://github.com/voothi/20250228230803-whisper/releases/download/v1.1.0/Purfview-Whisper-Faster.zip) (approx. 1.6 GB)
 
 Extract the zip file to a permanent location on your system.
 
