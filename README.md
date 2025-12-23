@@ -64,13 +64,19 @@ This "Automatic Programming" pattern guarantees that recordings and transcriptio
 **Step 1: Clone or Download**
 Ensure you have the project files locally.
 
-**Step 2: Install Python Dependencies**
+**Step 2: Download Whisper Backend**
+Download the `whisper-faster.exe` program and models from the following link:
+[Purfview-Whisper-Faster.zip](https://github.com/voothi/20250228230803-whisper/releases/download/v1.1.0/Purfview-Whisper-Faster.zip)
+
+Extract the zip file to a permanent location on your system.
+
+**Step 3: Install Python Dependencies**
 ```bash
 pip install sounddevice scipy pynput pyperclip pystray Pillow numpy
 ```
 *Note: You may need additional system libraries for audio (e.g., `portaudio` on Linux).*
 
-**Step 3: Configure the Application**
+**Step 4: Configure the Application**
 
 1.  Find `config.ini.template` in the project directory.
 2.  **Make a copy** and rename it to `config.ini`.
