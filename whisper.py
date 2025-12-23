@@ -481,12 +481,22 @@ def main():
     hotkeys = [hk_primary, hk_fragment]
 
     def on_press(key):
-        k = listener.canonical(key)
+        # Normalize to VK-only for comparison with our VK-based hotkeys
+        if isinstance(key, keyboard.KeyCode) and key.vk is not None:
+             k = keyboard.KeyCode.from_vk(key.vk)
+        else:
+             k = key
+             
         for hk in hotkeys:
             hk.press(k)
 
     def on_release(key):
-        k = listener.canonical(key)
+        # Normalize to VK-only for comparison
+        if isinstance(key, keyboard.KeyCode) and key.vk is not None:
+             k = keyboard.KeyCode.from_vk(key.vk)
+        else:
+             k = key
+
         for hk in hotkeys:
             hk.release(k)
 
