@@ -17,7 +17,7 @@ from queue import Queue
 import configparser
 from pathlib import Path
 
-__version__ = "1.17.0"
+__version__ = "1.17.2"
 
 # --- Constants ---
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -360,7 +360,10 @@ def on_activate():
                 else:
                     print("File processing cancelled. Returning to IDLE.")
                     set_state(State.IDLE)
-                    return # Skip both file processing and microphone recording
+                    return 
+            else:
+                print("[Scanner] No supported files found in clipboard. Microphone recording is disabled in File Processing Mode.")
+                return
 
         set_state(State.RECORDING)
 
