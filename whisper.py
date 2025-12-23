@@ -17,7 +17,7 @@ from queue import Queue
 import configparser
 from pathlib import Path
 
-__version__ = "1.15.0"
+__version__ = "1.15.2"
 
 # --- Constants ---
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -99,6 +99,7 @@ class State:
     IDLE = "IDLE"
     RECORDING = "RECORDING"
     PROCESSING = "PROCESSING"
+    WAITING = "WAITING"
 
 current_state = State.IDLE
 audio_data = []
@@ -133,6 +134,8 @@ def set_state(new_state):
         update_icon_color("red")
     elif new_state == State.PROCESSING:
         update_icon_color("yellow")
+    elif new_state == State.WAITING:
+        update_icon_color("gray")
 
 
 def update_icon_color(color):
@@ -330,6 +333,7 @@ def on_activate():
                     print(f"  - {f}")
 
                 # Console confirmation
+                set_state(State.WAITING)
                 confirm = input("Process these files? (y/n, default 'y'): ").lower().strip()
                 if confirm in ('', 'y', 'yes'):
                     print("Adding files to transcription queue...")
