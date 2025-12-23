@@ -2,7 +2,7 @@
 
 ## [v1.19.0] - 2025-12-23
 ### Added
-- **External Audio File Processing**: Support for transcribing existing files via CLI arguments or Clipboard Scanner.
+- **External Audio File Processing**: Support for transcribing existing files via CLI arguments or Clipboard Scanner. ([RFC: 20251223125117](./docs/rfcs/20251223125117-external-audio-processing.md))
 - **Clipboard Scanner Mode**: Automatically detect audio/video paths in clipboard and prompt for transcription.
 - **Smart Naming Convention**: Integrated language postfixes (e.g., `.en.srt`) and collision handling (e.g., `.1.en.srt`).
 - **Waiting State**: New tray icon color (**Gray**) indicates application is waiting for console input.
@@ -14,7 +14,7 @@
 ## [v1.15.0] - 2025-12-23
 
 ### Added
--   **External Audio Processing**: Major update enabling transcription of existing files without recording.
+-   **External Audio Processing**: Major update enabling transcription of existing files without recording. ([RFC: 20251223125117](./docs/rfcs/20251223125117-external-audio-processing.md))
 -   **Clipboard Scanner Mode**: Toggleable mode to scan clipboard for file paths (MP3, WAV, MP4, etc.) and transcribe them upon hotkey press. Includes console-based confirmation.
 -   **Multi-File CLI Support**: Pass multiple file paths directly as arguments (e.g., `python whisper.py file1.mp3 file2.wav`).
 -   **Smart File Naming**: Implemented `get_unique_path` to handle existing output files by adding incrementing suffixes (`.1`, `.2`, etc.), preventing data overwrite.
