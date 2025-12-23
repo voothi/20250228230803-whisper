@@ -1,5 +1,16 @@
 # Release Notes
 
+## [v1.19.0] - 2025-12-23
+### Added
+- **External Audio File Processing**: Support for transcribing existing files via CLI arguments or Clipboard Scanner.
+- **Clipboard Scanner Mode**: Automatically detect audio/video paths in clipboard and prompt for transcription.
+- **Smart Naming Convention**: Integrated language postfixes (e.g., `.en.srt`) and collision handling (e.g., `.1.en.srt`).
+- **Waiting State**: New tray icon color (**Gray**) indicates application is waiting for console input.
+- **Input Blocking**: State-aware safety guards prevent triggers from interfering with active processing or input prompts.
+- **Cross-Drive Support**: Reliable file handling across different disk partitions using `shutil.move`.
+- **UI Persistence**: Smarter setting persistence when switching languages vs. full application restart.
+- **Microphone Lockout**: Exclusive mode for "File Processing" to prevent concurrent state corruption.
+
 ## [v1.15.0] - 2025-12-23
 
 ### Added
