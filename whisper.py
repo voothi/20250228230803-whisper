@@ -17,7 +17,7 @@ from queue import Queue
 import configparser
 from pathlib import Path
 
-__version__ = "1.15.4"
+__version__ = "1.16.0"
 
 # --- Constants ---
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -323,6 +323,12 @@ def generate_timestamp():
 
 def on_activate():
     global recording_thread, timestamp_str, audio_file_path, output_srt_path, output_txt_path, fragment_mode
+    
+    # Block new actions if already processing or waiting for input
+    if current_state in (State.PROCESSING, State.WAITING):
+        print(f"Application is busy ({current_state}). Ignoring trigger.")
+        return
+
     if current_state != State.RECORDING:
         # Check for files in clipboard if scanner mode is active
         if file_scanner_enabled:
