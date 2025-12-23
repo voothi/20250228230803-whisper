@@ -129,6 +129,7 @@ output_srt_path = ""
 output_txt_path = ""
 icon = None
 last_click_time = 0
+show_stats = False # Flag for execution timing logging
 
 # Queue to store audio files for transcription
 transcription_queue = Queue()
@@ -185,8 +186,8 @@ def record_audio(sample_rate=44100):
             full_audio = np.concatenate(audio_data, axis=0)
             write(audio_file_path, sample_rate, full_audio)
             print(f"Recording saved to {audio_file_path}")
-            # Tuple: (path, skip_clipboard)
-            transcription_queue.put((audio_file_path, False))
+            # Tuple: (path, skip_clipboard, queued_at)
+            transcription_queue.put((audio_file_path, False, time.time()))
             
             # After recording, check if we need to process
             # If queue has items, we go to PROCESSING
@@ -208,15 +209,55 @@ def record_audio(sample_rate=44100):
             set_state(State.PROCESSING)
 
 
+def log_execution(audio_path, wait_time, process_time):
+    """Logs execution statistics to console and file if enabled."""
+    if not show_stats:
+        return
+
+    total_time = wait_time + process_time
+    filename = os.path.basename(audio_path)
+    
+    # Console output
+    print(f"[Stats] File: {filename} | Wait: {wait_time:.2f}s | Process: {process_time:.2f}s | Total: {total_time:.2f}s")
+
+    # File output
+    log_file = PROJECT_ROOT / "tmp" / "execution.log"
+    # Ensure tmp directory exists (it should be created in run_transcription, but safety check)
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"{timestamp} | {filename} | {wait_time:.4f} | {process_time:.4f} | {model_selected} | {language_selected}\n"
+    
+    try:
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(log_entry)
+            # Add header if file was empty/new? Simple append is fine for now.
+    except Exception as e:
+        print(f"Failed to write to log file: {e}")
+
+
 def run_transcription():
     global model_selected, language_selected, beep_off
     while True:
         queue_item = transcription_queue.get()
-        # Handle both old (string) and new (tuple) queue items for robustness
+        start_time = time.time()
+        queued_at = start_time # Default fall back if no timestamp provided
+
+        # Handle various queue item formats for robustness
+        # Format: (audio_file_path, skip_clipboard, queued_at)
         if isinstance(queue_item, tuple):
-            audio_file_path, skip_clipboard = queue_item
+            if len(queue_item) == 3:
+                audio_file_path, skip_clipboard, queued_at = queue_item
+            elif len(queue_item) == 2:
+                 audio_file_path, skip_clipboard = queue_item
+            else:
+                 # Unexpected tuple size, treat as just path if possible or error
+                 audio_file_path = str(queue_item[0])
+                 skip_clipboard = False
         else:
             audio_file_path, skip_clipboard = queue_item, False
+        
+        wait_duration = start_time - queued_at
 
         try:
             # We are now strictly processing this item
@@ -317,9 +358,13 @@ def run_transcription():
                     if current_state != State.RECORDING:
                         set_state(State.IDLE)
                 else:
-                    # More items? Stay in PROCESSING (Yellow)
                     if current_state != State.RECORDING:
                         set_state(State.PROCESSING)
+
+            # Log execution stats
+            process_end_time = time.time()
+            process_duration = process_end_time - start_time
+            log_execution(audio_file_path, wait_duration, process_duration)
 
         except Exception as e:
             print(f"Error processing {audio_file_path}: {e}")
@@ -362,7 +407,7 @@ def on_activate():
                     # If more than 1 file, we set skip_clipboard to True
                     skip_cb = len(found_files) > 1
                     for f in found_files:
-                        transcription_queue.put((f, skip_cb))
+                        transcription_queue.put((f, skip_cb, time.time()))
                     
                     # Ensure we are in PROCESSING state if we have items
                     if not transcription_queue.empty():
@@ -560,6 +605,9 @@ def main():
         "--file-scanner", action="store_true", help="Start with File Processing Mode enabled."
     )
     parser.add_argument(
+        "--stats", action="store_true", help="Enable execution timing logging to console and file."
+    )
+    parser.add_argument(
         "files", nargs="*", help="Optional list of file paths to transcribe immediately."
     )
     args = parser.parse_args()
@@ -571,9 +619,10 @@ def main():
     tray = args.tray
 
     # Set initial state from CLI arg
-    global default_fragment_mode, file_scanner_enabled
+    global default_fragment_mode, file_scanner_enabled, show_stats
     default_fragment_mode = args.fragment
     file_scanner_enabled = args.file_scanner
+    show_stats = args.stats
 
     print("Available audio devices:")
     print(sd.query_devices())
@@ -589,7 +638,7 @@ def main():
         for f in args.files:
             path = Path(f)
             if path.exists() and path.is_file():
-                transcription_queue.put((str(path), skip_cb))
+                transcription_queue.put((str(path), skip_cb, time.time()))
             else:
                 print(f"Warning: File not found or invalid: {f}")
 
