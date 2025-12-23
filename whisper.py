@@ -17,7 +17,7 @@ from queue import Queue
 import configparser
 from pathlib import Path
 
-__version__ = "1.15.2"
+__version__ = "1.15.4"
 
 # --- Constants ---
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -347,7 +347,9 @@ def on_activate():
                         set_state(State.PROCESSING)
                     return # Skip microphone recording
                 else:
-                    print("Skipping clipboard files. Starting microphone recording...")
+                    print("File processing cancelled. Returning to IDLE.")
+                    set_state(State.IDLE)
+                    return # Skip both file processing and microphone recording
 
         set_state(State.RECORDING)
 
