@@ -17,7 +17,7 @@ from queue import Queue
 import configparser
 from pathlib import Path
 
-__version__ = "1.17.2"
+__version__ = "1.18.0"
 
 # --- Constants ---
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -25,19 +25,30 @@ CONFIG_FILE = PROJECT_ROOT / "config.ini"
 SUPPORTED_EXTENSIONS = {'.wav', '.mp3', '.m4a', '.mp4', '.mkv', '.flac', '.ogg', '.aac'}
 
 
-def get_unique_path(path):
-    """Adds .1, .2, etc. to the filename if it already exists."""
+def get_unique_path(path, language=None):
+    """Adds .1, .2, etc. to the filename if it already exists. Handles optional language postfix."""
     path = Path(path)
-    if not path.exists():
-        return str(path)
-
     parent = path.parent
     stem = path.stem
     suffix = path.suffix
 
+    if language:
+        # Initial target with language: filename.ru.srt
+        target_path = parent / f"{stem}.{language}{suffix}"
+    else:
+        target_path = path
+
+    if not target_path.exists():
+        return str(target_path)
+
     counter = 1
     while True:
-        new_name = f"{stem}.{counter}{suffix}"
+        if language:
+            # If exists, becomes filename.1.ru.srt
+            new_name = f"{stem}.{counter}.{language}{suffix}"
+        else:
+            new_name = f"{stem}.{counter}{suffix}"
+            
         new_path = parent / new_name
         if not new_path.exists():
             return str(new_path)
@@ -220,9 +231,9 @@ def run_transcription():
             input_basename = os.path.basename(os.path.splitext(audio_file_path)[0])
             temp_srt_path = os.path.join(temp_output_dir, f"{input_basename}.srt")
 
-            # Final output paths - use get_unique_path to handle existing files
+            # Final output paths - use get_unique_path to handle existing files and language postfix
             final_srt_base = os.path.splitext(audio_file_path)[0] + ".srt"
-            final_srt_path = get_unique_path(final_srt_base)
+            final_srt_path = get_unique_path(final_srt_base, language_selected)
             final_txt_path = os.path.splitext(final_srt_path)[0] + ".txt"
 
             print(f"Starting transcription for {audio_file_path}...")
