@@ -62,6 +62,7 @@ audio_data = []
 recording_thread = None
 copy_to_clipboard = False
 fragment_mode = False
+default_fragment_mode = False  # New global for tray setting
 use_timestamp = False
 model_selected = "base"
 language_selected = None
@@ -323,6 +324,11 @@ def create_icon():
         "Audio Recorder and Transcriber",
         menu=pystray.Menu(
             pystray.MenuItem("Recording on / off", on_activate, default=True),
+            pystray.MenuItem(
+                "Fragment Mode",
+                toggle_fragment_mode,
+                checked=lambda item: default_fragment_mode
+            ),
             pystray.MenuItem("Restart", restart),
             pystray.MenuItem(
                 "Set Language",
@@ -338,12 +344,17 @@ def create_icon():
     )
     icon.run()
 
-def on_activate_normal():
+def on_activate_primary():
     global fragment_mode
     if current_state != State.RECORDING:
-        fragment_mode = False
-        print("Starting NORMAL recording...")
+        fragment_mode = default_fragment_mode
+        mode_name = "FRAGMENT" if fragment_mode else "NORMAL"
+        print(f"Starting {mode_name} recording (Tray Setting)...")
     on_activate()
+
+def toggle_fragment_mode(icon, item):
+    global default_fragment_mode
+    default_fragment_mode = not default_fragment_mode
 
 def on_activate_fragment():
     global fragment_mode
@@ -430,7 +441,7 @@ def main():
         tray_thread.start()
 
     hotkey_map = {
-        hotkey: on_activate_normal,
+        hotkey: on_activate_primary,
         hotkey_fragment: on_activate_fragment
     }
 
