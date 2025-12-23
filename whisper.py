@@ -476,12 +476,8 @@ def restart():
 
     print(f"\nRestarting...\n")
     
-    # Reconstruct args based on current state
-    args = [arg for arg in sys.argv[1:] if arg not in ("--fragment", "--file-scanner")]
-    if default_fragment_mode:
-        args.append("--fragment")
-    if file_scanner_enabled:
-        args.append("--file-scanner")
+    # Reset to original CLI args but always clear the language
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("--language=")]
 
     subprocess.Popen([python, "restart.py", script_to_run] + args)
     os._exit(0)
