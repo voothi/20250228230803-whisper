@@ -331,6 +331,7 @@ def create_icon():
         image,
         "Audio Recorder and Transcriber",
         menu=pystray.Menu(
+            pystray.MenuItem("Open Files", open_base_directory),
             pystray.MenuItem("Recording on / off", on_activate, default=True),
             pystray.MenuItem(
                 "Fragment Mode",
@@ -370,6 +371,14 @@ def on_activate_fragment():
         fragment_mode = True
         print("Starting FRAGMENT recording...")
     on_activate()
+
+
+def open_base_directory():
+    try:
+        os.startfile(base_dir)
+    except Exception as e:
+        print(f"Error opening directory: {e}")
+
 
 
 def restart():
