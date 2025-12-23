@@ -4,20 +4,20 @@
 External Audio File Processing
 
 ## Staging
-20251223125117
-20251223141313
-20251223141912
-20251223142524
-20251223142739
-20251223143040
-20251223143406
-20251223143858
-20251223144311
-20251223145538
-20251223150019
-20251223150249
-20251223150831
-20251223151452
+- **20251223125117**: Batch Processing Clipboard Logic - Refined clipboard handling to skip transcription copy during multi-file operations.
+- **20251223141313**: Fixed cross-drive file movement issues (`WinError 17`) using `shutil.move`.
+- **20251223141912**: Optimized multi-file CLI argument handling and exit logic.
+- **20251223142524**: Persistence of "File Processing Mode" when performing language restarts.
+- **20251223142739**: Reset behavior refinement: only switching languages persists dynamic settings.
+- **20251223143040**: Explicit flag reset during manual application restart.
+- **20251223143406**: Added `WAITING` state and **Gray** tray icon for console interaction feedback.
+- **20251223143858**: Modified logic to abort action on user cancellation instead of triggering microphone recording.
+- **20251223144311**: Implemented input blocking to prevent secondary triggers while busy.
+- **20251223145538**: Refined blocking logic to allow sequential recording in Normal Mode while keeping Scanner Mode exclusive.
+- **20251223150019**: Enhanced exclusivity for File Processing Mode to block all incoming triggers.
+- **20251223150249**: Disabled microphone recording entirely when File Processing Mode is enabled.
+- **20251223150831**: Implemented smart naming with language-specific postfixes (e.g., `.en.srt`) and dot-notation versioning (e.g., `.1.en.srt`).
+- **20251223151452**: Added safety guards to prevent language switching during active processing to avoid queue resets.
 
 ## Description
 Comprehensive implementation of external file processing capabilities, transitioning the utility from a pure voice recorder to a dual-purpose transcription engine. This includes clipboard scanning, multi-file CLI support, advanced naming conventions, and robust state management for safety.
