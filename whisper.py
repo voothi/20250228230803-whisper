@@ -462,8 +462,7 @@ def main():
     # Helper to create VK-based hotkeys for layout independence
     def create_vk_hotkey(hotkey_str, callback):
         # Parse the hotkey string into a set of keys
-        # We take the first combination if multiple are returned
-        keys = keyboard.HotKey.parse(hotkey_str)[0]
+        keys = keyboard.HotKey.parse(hotkey_str)
         new_keys = set()
         for key in keys:
             if isinstance(key, keyboard.KeyCode) and key.char:
