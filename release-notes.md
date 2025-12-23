@@ -1,5 +1,11 @@
 # Release Notes
 
+## [v1.14.16] - 2025-12-23
+
+### Added
+-   **Open Files Directory**: Added a "Open Files" menu item to the system tray context menu. This allows users to quickly open the directory containing their audio recordings and transcription files. ([RFC: 20251223121404](./docs/rfcs/20251223121404-open-directory-menu.md))
+
+
 ## [v1.4.14] - 2025-12-23
 
 ### Fixed
