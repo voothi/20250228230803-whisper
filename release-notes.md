@@ -1,5 +1,11 @@
 # Release Notes
 
+## [v1.20.2] - 2025-12-23
+### Added
+- **Execution Statistics**: New `--stats` flag to track and log transcription performance. ([RFC: 20251223213613](./docs/rfcs/20251223213613-execution-statistics.md))
+- **Performance Logging**: Detailed TSV logs (`tmp/execution.tsv`) capturing Wait Time, Processing Time, Model, and Language for every file.
+- **Console Feedback**: Real-time display of timing metrics in the console output.
+
 ## [v1.19.2] - 2025-12-23
 ### Documentation
 - **RFC Traceability**: Standardized and linked all session RFCs to release notes for improved historical tracking.
