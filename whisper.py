@@ -221,12 +221,12 @@ def log_execution(audio_path, wait_time, process_time):
     print(f"[Stats] File: {filename} | Wait: {wait_time:.2f}s | Process: {process_time:.2f}s | Total: {total_time:.2f}s")
 
     # File output
-    log_file = PROJECT_ROOT / "tmp" / "execution.log"
+    log_file = PROJECT_ROOT / "tmp" / "execution.tsv"
     # Ensure tmp directory exists (it should be created in run_transcription, but safety check)
     log_file.parent.mkdir(parents=True, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_entry = f"{timestamp} | {filename} | {wait_time:.4f} | {process_time:.4f} | {model_selected} | {language_selected}\n"
+    log_entry = f"{timestamp}\t{filename}\t{wait_time:.4f}\t{process_time:.4f}\t{model_selected}\t{language_selected}\n"
     
     try:
         with open(log_file, "a", encoding="utf-8") as f:
