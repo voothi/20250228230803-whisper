@@ -476,8 +476,9 @@ def restart():
 
     print(f"\nRestarting...\n")
     
-    # Reset to original CLI args but always clear the language
-    args = [arg for arg in sys.argv[1:] if not arg.startswith("--language=")]
+    # Reset to original CLI args: clear language and dynamic mode flags
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("--language=") 
+            and arg not in ("--fragment", "--file-scanner")]
 
     subprocess.Popen([python, "restart.py", script_to_run] + args)
     os._exit(0)
