@@ -1,5 +1,10 @@
 # Release Notes
 
+## [v1.4.14] - 2025-12-23
+
+### Fixed
+-   **Hotkey Reliability**: Fixed an issue where global hotkeys (`Ctrl+Alt+E`, `Ctrl+Alt+F`) would fail when using non-English keyboard layouts (e.g., Russian). The hotkeys are now layout-independent and trigger based on physical key usage. ([RFC: 20251223104014](./docs/rfcs/20251223104014-hotkey-fix.md))
+
 ## [v1.4.12] - 2025-12-23
 
 ### Added
