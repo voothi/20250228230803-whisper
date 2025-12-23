@@ -306,7 +306,15 @@ def restart_with_language(language):
     icon.stop()
     python = sys.executable
     script_to_run = __file__
-    args = sys.argv[1:] + [f"--language={language}"]
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("--language=")] + [f"--language={language}"]
+    
+    # Persist fragment mode setting
+    if default_fragment_mode:
+         if "--fragment" not in args:
+            args.append("--fragment")
+    else:
+        if "--fragment" in args:
+            args.remove("--fragment")
 
     print(f"\nRestarting with language: {language}\n")
 
@@ -371,8 +379,13 @@ def restart():
     script_to_run = __file__
 
     print(f"\nRestarting...\n")
+    
+    # Reconstruct args based on current state
+    args = [arg for arg in sys.argv[1:] if arg != "--fragment"]
+    if default_fragment_mode:
+        args.append("--fragment")
 
-    subprocess.Popen([python, "restart.py", script_to_run] + sys.argv[1:])
+    subprocess.Popen([python, "restart.py", script_to_run] + args)
     os._exit(0)
 
 
@@ -416,13 +429,19 @@ def main():
         "--beep_off", action="store_true", help="Disable beep during transcription."
     )
     parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")
+    parser.add_argument("--fragment", action="store_true", help="Start with Fragment Mode enabled.")
     args = parser.parse_args()
     copy_to_clipboard = args.clipboard
     use_timestamp = args.timestamp
     model_selected = args.model
     language_selected = args.language
     beep_off = args.beep_off
+    beep_off = args.beep_off
     tray = args.tray
+    
+    # Set initial state from CLI arg
+    global default_fragment_mode
+    default_fragment_mode = args.fragment
 
     print("Available audio devices:")
     print(sd.query_devices())
