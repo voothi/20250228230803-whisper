@@ -1,5 +1,13 @@
 # Release Notes
 
+## [v1.4.12] - 2025-12-23
+
+### Added
+-   **Fragment Mode Toggle**: Added a checkable option in the system tray menu to toggle "Fragment Mode" for the primary hotkey. ([RFC: 20251223012133](./docs/rfcs/20251223012133-fragment-mode-toggle.md))
+    -   **Behavior**: When checked, the standard hotkey performs fragment transcription (lowercase, no period).
+    -   **Persistence**: The state of this toggle is preserved even when switching languages (restarting the application).
+
+
 ## [v1.4.8] - 2025-12-23
 
 ### Documentation

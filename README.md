@@ -2,7 +2,7 @@
 
 A powerful Python utility to record audio and transcribe it using the Faster-Whisper engine.
 
-[![Version](https://img.shields.io/badge/version-v1.4.8-blue)](./release-notes.md) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-v1.4.12-blue)](./release-notes.md) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This utility allows you to record your voice using a global hotkey and automatically transcribe it to text using OpenAI's Whisper models. It features system tray integration, clipboard support, and a highly configurable setup via `config.ini`.
 
@@ -26,6 +26,7 @@ This utility allows you to record your voice using a global hotkey and automatic
 -   **Global Hotkey**: Start and stop recording from anywhere using a configurable hotkey (default: `Ctrl+Alt+E`).
 -   **Fragment Mode**: **NEW!** Dedicated hotkey (default: `Ctrl+Alt+F`) for transcribing text phrases (lowercase, no trailing period) - perfect for inserting into existing sentences.
 -   **System Tray Integration**: Visual feedback with icon color changes (Red for recording, Yellow for processing, Blue for idle) and menu controls.
+-   **Fragment Mode Toggle**: Toggle "Fragment Mode" directly from the tray menu to use the primary hotkey for fragment transcription without needing a separate shortcut.
 -   **Configuration-Driven**: All paths and settings are managed in a `config.ini` file.
 -   **Multiple Models**: Supports `base`, `medium`, `distil-large-v3`, and the high-performance `large-v3-turbo`.
 -   **Multilingual**: Easy language switching (English, German, Russian, Ukrainian) via the tray menu or command line.
@@ -107,6 +108,7 @@ python whisper.py [arguments]
 | `--tray`        | Enable system tray icon.                                                    |
 | `--timestamp`   | Add timestamps to filenames.                                                |
 | `--beep_off`    | Disable beep sound during transcription.                                    |
+| `--fragment`    | Start with Fragment Mode enabled (affects primary hotkey).                  |
 
 ### Example
 
