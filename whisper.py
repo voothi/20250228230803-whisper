@@ -480,27 +480,33 @@ def main():
     hk_fragment = create_vk_hotkey(hotkey_fragment, on_activate_fragment)
     hotkeys = [hk_primary, hk_fragment]
 
-    def on_press(key):
-        # Normalize to VK-only for comparison with our VK-based hotkeys
+    # variable to hold the listener instance so it can be used in callbacks
+    listener = None
+
+    def normalize(key):
+        # Determine if we should use VK or canonical
         if isinstance(key, keyboard.KeyCode) and key.vk is not None:
-             k = keyboard.KeyCode.from_vk(key.vk)
-        else:
-             k = key
-             
+             # For character keys, strictly use VK to avoid layout mismatches
+             return keyboard.KeyCode.from_vk(key.vk)
+        
+        # For control keys (modifiers), use canonical to map Left/Right to generic
+        if listener:
+            return listener.canonical(key)
+        
+        return key
+
+    def on_press(key):
+        k = normalize(key)
         for hk in hotkeys:
             hk.press(k)
 
     def on_release(key):
-        # Normalize to VK-only for comparison
-        if isinstance(key, keyboard.KeyCode) and key.vk is not None:
-             k = keyboard.KeyCode.from_vk(key.vk)
-        else:
-             k = key
-
+        k = normalize(key)
         for hk in hotkeys:
             hk.release(k)
 
-    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+    listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+    with listener:
         print(f"\nListening for {hotkey} (Normal) and {hotkey_fragment} (Fragment) [Layout Independent]...")
         listener.join()
 
