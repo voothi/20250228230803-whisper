@@ -17,7 +17,7 @@ from queue import Queue
 import configparser
 from pathlib import Path
 
-__version__ = "1.19.0"
+__version__ = "1.19.2"
 
 # --- Constants ---
 PROJECT_ROOT = Path(__file__).resolve().parent

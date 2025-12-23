@@ -1,5 +1,10 @@
 # Release Notes
 
+## [v1.19.2] - 2025-12-23
+### Documentation
+- **RFC Traceability**: Standardized and linked all session RFCs to release notes for improved historical tracking.
+- **Detailed Staging**: Updated the External Audio Processing RFC with specific ZID-to-requirement mappings for all 14 project stages.
+
 ## [v1.19.0] - 2025-12-23
 ### Added
 - **External Audio File Processing**: Support for transcribing existing files via CLI arguments or Clipboard Scanner. ([RFC: 20251223125117](./docs/rfcs/20251223125117-external-audio-processing.md))
