@@ -386,6 +386,14 @@ def restart_with_language(language):
         if "--fragment" in args:
             args.remove("--fragment")
 
+    # Persist file scanner setting
+    if file_scanner_enabled:
+        if "--file-scanner" not in args:
+            args.append("--file-scanner")
+    else:
+        if "--file-scanner" in args:
+            args.remove("--file-scanner")
+
     print(f"\nRestarting with language: {language}\n")
 
     subprocess.Popen([python, "restart.py", script_to_run] + args)
@@ -469,9 +477,11 @@ def restart():
     print(f"\nRestarting...\n")
     
     # Reconstruct args based on current state
-    args = [arg for arg in sys.argv[1:] if arg != "--fragment"]
+    args = [arg for arg in sys.argv[1:] if arg not in ("--fragment", "--file-scanner")]
     if default_fragment_mode:
         args.append("--fragment")
+    if file_scanner_enabled:
+        args.append("--file-scanner")
 
     subprocess.Popen([python, "restart.py", script_to_run] + args)
     os._exit(0)
