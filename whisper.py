@@ -118,6 +118,8 @@ recording_thread = None
 copy_to_clipboard = False
 fragment_mode = False
 default_fragment_mode = False  # New global for tray setting
+one_mode = False
+default_one_mode = False  # New global for tray setting
 file_scanner_enabled = False  # Toggle for clipboard processing
 use_timestamp = False
 model_selected = "base"
@@ -301,9 +303,15 @@ def run_transcription():
                     "--output_format",
                     "srt",
                     "--threads",
-                    "8",
-                    "--sentence"
+                    "8"
                 ]
+
+                # ONE-WORD MODE vs SENTENCE SPLITTING
+                if one_mode:
+                     srt_command.extend(["--one_mode", "2"])
+                else:
+                     srt_command.append("--sentence")
+
                 if language_selected is not None:
                     srt_command.extend(["--language", language_selected])
                 if beep_off:
@@ -474,6 +482,14 @@ def restart_with_language(language):
         if "--file-scanner" in args:
             args.remove("--file-scanner")
 
+    # Persist one-word mode setting
+    if default_one_mode:
+        if "--one-mode" not in args:
+            args.append("--one-mode")
+    else:
+        if "--one-mode" in args:
+            args.remove("--one-mode")
+
     print(f"\nRestarting with language: {language}\n")
 
     subprocess.Popen([python, "restart.py", script_to_run] + args)
@@ -497,6 +513,11 @@ def create_icon():
                 checked=lambda item: default_fragment_mode
             ),
             pystray.MenuItem(
+                "One-Word Mode",
+                toggle_one_mode,
+                checked=lambda item: default_one_mode
+            ),
+            pystray.MenuItem(
                 "File Processing Mode",
                 toggle_file_scanner,
                 checked=lambda item: file_scanner_enabled
@@ -517,16 +538,21 @@ def create_icon():
     icon.run()
 
 def on_activate_primary():
-    global fragment_mode
+    global fragment_mode, one_mode
     if current_state != State.RECORDING:
         fragment_mode = default_fragment_mode
-        mode_name = "FRAGMENT" if fragment_mode else "NORMAL"
+        one_mode = default_one_mode
+        mode_name = "FRAGMENT" if fragment_mode else "ONE-WORD" if one_mode else "NORMAL"
         print(f"Starting {mode_name} recording (Tray Setting)...")
     on_activate()
 
 def toggle_fragment_mode(icon, item):
     global default_fragment_mode
     default_fragment_mode = not default_fragment_mode
+
+def toggle_one_mode(icon, item):
+    global default_one_mode
+    default_one_mode = not default_one_mode
 
 def toggle_file_scanner(icon, item):
     global file_scanner_enabled
@@ -558,7 +584,7 @@ def restart():
     
     # Reset to original CLI args: clear language and dynamic mode flags
     args = [arg for arg in sys.argv[1:] if not arg.startswith("--language=") 
-            and arg not in ("--fragment", "--file-scanner")]
+            and arg not in ("--fragment", "--file-scanner", "--one-mode")]
 
     subprocess.Popen([python, "restart.py", script_to_run] + args)
     os._exit(0)
@@ -605,6 +631,7 @@ def main():
     )
     parser.add_argument("--tray", action="store_true", help="Enable system tray icon.")
     parser.add_argument("--fragment", action="store_true", help="Start with Fragment Mode enabled.")
+    parser.add_argument("--one-mode", action="store_true", help="Start with One-Word Mode enabled.")
     parser.add_argument(
         "--file-scanner", action="store_true", help="Start with File Processing Mode enabled."
     )
@@ -623,8 +650,9 @@ def main():
     tray = args.tray
 
     # Set initial state from CLI arg
-    global default_fragment_mode, file_scanner_enabled, show_stats
+    global default_fragment_mode, default_one_mode, file_scanner_enabled, show_stats
     default_fragment_mode = args.fragment
+    default_one_mode = args.one_mode
     file_scanner_enabled = args.file_scanner
     show_stats = args.stats
 
