@@ -506,7 +506,7 @@ def create_icon():
         "Audio Recorder and Transcriber",
         menu=pystray.Menu(
             pystray.MenuItem("Open Files", open_base_directory),
-            pystray.MenuItem("Recording on / off", on_activate, default=True),
+            pystray.MenuItem("Recording on / off", on_activate_primary, default=True),
             pystray.MenuItem(
                 "Fragment Mode",
                 toggle_fragment_mode,
@@ -559,9 +559,10 @@ def toggle_file_scanner(icon, item):
     file_scanner_enabled = not file_scanner_enabled
 
 def on_activate_fragment():
-    global fragment_mode
+    global fragment_mode, one_mode
     if current_state != State.RECORDING:
         fragment_mode = True
+        one_mode = False
         print("Starting FRAGMENT recording...")
     on_activate()
 
