@@ -308,7 +308,7 @@ def run_transcription():
 
                 # ONE-WORD MODE vs SENTENCE SPLITTING
                 if one_mode:
-                     srt_command.extend(["--one_mode", "2"])
+                     srt_command.extend(["--one_word", "2"])
                 else:
                      srt_command.append("--sentence")
 
