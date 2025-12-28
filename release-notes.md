@@ -1,5 +1,10 @@
 # Release Notes
 
+## [v1.22.2] - 2025-12-28
+### Added
+- **One-Word Mode**: New tray menu option to switch transcription to word-by-word subtitles using `--one_word 2`, replacing the default sentence splitting. ([RFC: 20251228170757](./docs/rfcs/20251228170757-one-word-mode.md))
+- **Mode Persistence**: One-Word Mode setting is preserved across application restarts.
+
 ## [v1.20.2] - 2025-12-23
 ### Added
 - **Execution Statistics**: New `--stats` flag to track and log transcription performance. ([RFC: 20251223213613](./docs/rfcs/20251223213613-execution-statistics.md))
